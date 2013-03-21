@@ -27,15 +27,54 @@ namespace TickletMeister_Viewportletlet
         private VoiceChatlet vc;
         private object voiceLock = new object();
         private Boolean waitingForServer = false; //indicates whether or not we are anticipating a "Ticklet" response from the server
+        private String[] dummyNuts = new String[0];
 
         public Viewportletlet_Window()
         {
             selectedTicklet = null;
             
             InitializeComponent();
+            voiceButton.Enabled = false;
+            InitializeTickList();
             InitializeAndSubscribeViewer();
             socketThread = new System.Threading.Thread(InitializeServerSocket);
             socketThread.Start();
+            
+        }
+
+        private void InitializeTickList()
+        {
+            tickList.DataSource = dummyNuts ;
+        }
+
+        private void refreshTickList(String[] elms)
+        {
+            Action update = () => { tickList.DataSource = elms; };
+            this.Invoke(update);
+        }
+
+        private int getIDFromTickListEntry(String entry)
+        {
+            try
+            {
+                String can = entry.Substring(entry.IndexOf(' ') + 1);
+                int index;
+                bool suc = int.TryParse(can, out index);
+                if (!suc)
+                {
+                    throw new InvalidExpressionException(entry + " is not properly formatted: unable to parse "+can);
+                }
+                return index;
+            }
+            catch (IndexOutOfRangeException e)
+            {
+                throw new InvalidExpressionException(entry + " is not properly formatted");
+            }
+        }
+
+        private void AuthenticateSelf()
+        {
+            sendMessageToServer(new Message("Authenticate", "Me"));
         }
 
         private void InitializeAndSubscribeViewer()
@@ -91,9 +130,11 @@ namespace TickletMeister_Viewportletlet
 
             Console.WriteLine("connected on port " + port);
 
-
+            AuthenticateSelf();
 
         }
+
+        
 
         /**
          * This is called upon the client's first connection to the server
@@ -186,14 +227,15 @@ namespace TickletMeister_Viewportletlet
             {
                 handleMessageGoGoVoiceChat(data);
             }
+            else if (tag.Equals("RefreshList"))
+            {
+                handleMessageRefreshList(data);
+            }
         }
 
         private void handleMessageDisplayText(String data)
         {
-            Action SetText = () => {
-                textOutputBox.Text = data;
-            };
-            this.Invoke(SetText);
+            displayOutputText(data);
         }
 
         /**
@@ -234,6 +276,7 @@ namespace TickletMeister_Viewportletlet
         private void handleMessagePollFail(String data)
         {
             waitingForServer = false; //stop waiting TODO make this better?
+            displayOutputText("unable to poll from ticklet queue");
         }
 
         /*
@@ -283,6 +326,19 @@ namespace TickletMeister_Viewportletlet
 
         }
 
+        /**
+         * UpdateList <ID0>;<ID1>;<ID2>;<ID3> ...
+         * */
+        private void handleMessageRefreshList(String data)
+        {
+            String[] elems = dummyNuts;
+            if (!"nothing".Equals(data))
+            {
+                elems = data.Split(';');
+            }
+            refreshTickList(elems);
+        }
+
         private void OnConnectToClient(object sender, EventArgs e)
         {
             
@@ -317,6 +373,7 @@ namespace TickletMeister_Viewportletlet
         private void OnDisconnectFromClient(int reason, int info)
         {
             ShowTickletList();
+            
         }
 
         private void OnConnectionFail()
@@ -326,12 +383,18 @@ namespace TickletMeister_Viewportletlet
 
         private void ShowTickletList()
         {
-
+            lock (tickList)
+            {
+                tickList.Enabled = true;
+            }
         }
 
         private void HideTickletList()
         {
-
+            lock (tickList)
+            {
+                tickList.Enabled = false;
+            }
         }
 
         private void SelectTicklet(Ticklet t)
@@ -341,6 +404,11 @@ namespace TickletMeister_Viewportletlet
                 if (t != null)
                 {
                     Action SetText = () => { tickletSelectionBox.Text = "ID: " + t.getID() + " Connection:" + t.getConnectionString(); };
+                    this.Invoke(SetText);
+                }
+                else
+                {
+                    Action SetText = () => { tickletSelectionBox.Text = "no ticklet selected"; };
                     this.Invoke(SetText);
                 }
                 Console.WriteLine("selected: " + t);
@@ -380,7 +448,8 @@ namespace TickletMeister_Viewportletlet
                         //rdpViewer.Connect(selectedTicklet.getConnectionString(), selectedTicklet.getClientID(), "");
                         axRDPViewer1.Connect(selectedTicklet.getConnectionString(), selectedTicklet.getClientID(), "");
                         axRDPViewer1.Show();
-
+                        connectButton.Enabled = false;
+                        voiceButton.Enabled = true;
 
 
                     }
@@ -399,6 +468,7 @@ namespace TickletMeister_Viewportletlet
         private void DisplayClientConnectionErrorMessage()
         {
             //TODO indicate that there was an error connecting to the client at the selected ticklet
+            displayOutputText("unable to connect to client");
         }
 
         private void textBox1_TextChanged(object sender, EventArgs e)
@@ -408,7 +478,7 @@ namespace TickletMeister_Viewportletlet
 
         private void discoButton_Click(object sender, EventArgs e)
         {
-            axRDPViewer1.Disconnect();
+            
             lock (voiceLock)
             {
                 if (vc != null)
@@ -418,6 +488,13 @@ namespace TickletMeister_Viewportletlet
                 }
             }
             
+            lock (LoxyPants)
+            {
+                SelectTicklet(null);
+            }
+            axRDPViewer1.Disconnect();
+            connectButton.Enabled = true;
+            voiceButton.Enabled = false;
         }
 
         private void ShuffaShutdown()
@@ -438,6 +515,7 @@ namespace TickletMeister_Viewportletlet
             }
 
             socketThread.Abort();
+            
             Console.WriteLine("Sharing Session Closed");
             Application.Exit();
         }
@@ -486,16 +564,41 @@ namespace TickletMeister_Viewportletlet
 
         private void selectButton_Click(object sender, EventArgs e)
         {
-            int index;
-            bool suc = int.TryParse(textBox1.Text, out index);
-            if (suc && !waitingForServer)
+            try
             {
-                lock (LoxyPants)
-                {
-                    Message m = new Message("Poll", index+"");
-                    waitingForServer = true;
-                    sendMessageToServer(m);
-                }
+                    String sel = null;
+                    lock (tickList)
+                    {
+                        sel = (String)tickList.SelectedItem;
+                    }
+                    if (sel == null)
+                    {
+                        throw new ArgumentNullException("no items selected");
+                    }
+                    int index = getIDFromTickListEntry(sel);
+
+                    lock (LoxyPants)
+                    {
+                        if (!waitingForServer)
+                        {
+                            Message m = new Message("Poll", index + "");
+                            waitingForServer = true;
+                            sendMessageToServer(m);
+                        }
+                    }
+            }
+            catch (InvalidCastException ex)
+            {
+                //do nothing
+            }
+            catch (ArgumentNullException ex)
+            {
+                //do nothing
+            }
+            catch (InvalidExpressionException ex)
+            {
+                Console.WriteLine("Update improperly formatted");
+                Console.WriteLine(ex.Message);
             }
         }
 
@@ -505,6 +608,7 @@ namespace TickletMeister_Viewportletlet
             {
                 if (selectedTicklet == null)
                     return;
+                voiceButton.Enabled = false;
                 int id = selectedTicklet.getID();
                 int inPort = 5000;
                 int outPort = 6000;
@@ -512,6 +616,12 @@ namespace TickletMeister_Viewportletlet
                 sendMessageToServer(new Message("DesireVoice", messageString));
             }
             
+        }
+
+        private void displayOutputText(String text)
+        {
+            Action SetText = () => { textOutputBox.Text = text; };
+            this.Invoke(SetText);
         }
 
      

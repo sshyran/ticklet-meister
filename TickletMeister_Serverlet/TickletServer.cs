@@ -34,6 +34,7 @@ namespace TickletMeister_Serverlet
         private Dictionary<int, Socket> entities = new Dictionary<int, Socket>(); //maps a unique id to each socket :: ONLY entities WILL BE USED AS LOCK
         private Dictionary<Socket, int> idLookup = new Dictionary<Socket, int>(); //maps the same socket to its id
         private Dictionary<Socket, Thread> listenThreads = new Dictionary<Socket, Thread>(); //maps each client socket to the respective listen thread
+        private Dictionary<int, Socket> gurus = new Dictionary<int, Socket>(); //keeps track of the connected gurus
         public void addEntityEntry(int id, Socket sock, Thread l)
         {
             lock (entities)
@@ -41,6 +42,19 @@ namespace TickletMeister_Serverlet
                 listenThreads.Add(sock, l);
                 entities.Add(id, sock);
                 idLookup.Add(sock, id);
+            }
+        }
+        public bool authenticateGuru(Socket sock)
+        {
+            lock (entities)
+            {
+                int id;
+                bool suc = idLookup.TryGetValue(sock, out id);
+                if (suc)
+                {
+                    gurus.Add(id, sock);
+                }
+                return suc;
             }
         }
         public void removeEntityEntry(Socket sock)
@@ -62,6 +76,7 @@ namespace TickletMeister_Serverlet
                 }
                 idLookup.Remove(sock);
                 entities.Remove(id);
+                gurus.Remove(id);
             }
         }
         public Socket IDtoSocket(int id)
@@ -123,6 +138,13 @@ namespace TickletMeister_Serverlet
                 return entities.Keys;
             }
         }
+        public Dictionary<int, Socket>.ValueCollection listGurus()
+        {
+            lock (entities)
+            {
+                return gurus.Values;
+            }
+        }
         public static String SocketToIP(Socket s)
         {
             return (s.RemoteEndPoint as IPEndPoint).Address.ToString();
@@ -140,7 +162,7 @@ namespace TickletMeister_Serverlet
         private Dictionary<int, Ticklet> tickletQueue = new Dictionary<int, Ticklet>(); //TODO this is very primitive; it shall be fixed
         private IDGenerator gen = new SimpleIDGen(0);
 
-        
+        private Thread refreshThread;
 
         private void startServer(String[] args)
         {
@@ -170,7 +192,7 @@ namespace TickletMeister_Serverlet
                     port = 8888;
                 }
             }
-
+            InitializeRefreshThread(2000);
             con = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             while (!con.IsBound)
             {
@@ -194,6 +216,19 @@ namespace TickletMeister_Serverlet
                 MRE.WaitOne();
             }
             
+        }
+
+        private void InitializeRefreshThread(int freq)
+        {
+            Action action = () => {
+                while (true)
+                {
+                    Thread.Sleep(freq);
+                    RefreshGuruLists();
+                }
+            };
+            refreshThread = new Thread(new ThreadStart(action));
+            refreshThread.Start();
         }
 
         static void Main(string[] args)
@@ -255,6 +290,47 @@ namespace TickletMeister_Serverlet
             
         }
 
+        /**
+         *  refreshes the list for all currently authenticated gurus
+         *  
+         * 
+         * */
+        private void RefreshGuruLists()
+        {
+            lock (tickletQueue)
+            {
+                if (tickletQueue.Count > 0)
+                {
+                    StringBuilder buildy = new StringBuilder();
+                    foreach (int id in tickletQueue.Keys)
+                    {
+                        buildy.Append(";" + "ID# " + id);
+                    }
+                    String ticks = buildy.ToString().Substring(buildy.ToString().IndexOf(';') + 1); //remove starting ';'
+                    sendToAllGurus(new Message("RefreshList", ticks));
+                }
+                else
+                {
+                    sendToAllGurus(new Message("RefreshList", "nothing"));
+                }
+            }
+
+        }
+
+        private void sendToAllGurus(Message message)
+        {
+            foreach (Socket guru in entities.listGurus())
+            {
+                try
+                {
+                    Message.sendMessageTo(message, guru);
+                }
+                catch (SocketException e)
+                {
+                    //ignore if sending didn't work
+                }
+            }
+        }
 
         /**
          * Functionality for each message type is handled here
@@ -287,6 +363,10 @@ namespace TickletMeister_Serverlet
             else if (tag.Equals("DesireVoice"))
             {
                 handleMessageDesireVoice(data, clientSocket);
+            }
+            else if (tag.Equals("Authenticate"))
+            {
+                handleMessageAuthenticate(data, clientSocket);
             }
         }
 
@@ -430,6 +510,11 @@ namespace TickletMeister_Serverlet
                     Console.WriteLine("error parsing DesireVoice request: " + data);
                 }
             }
+        }
+
+        private void handleMessageAuthenticate(String data, Socket guruSocket)
+        {
+            entities.authenticateGuru(guruSocket);
         }
 
 

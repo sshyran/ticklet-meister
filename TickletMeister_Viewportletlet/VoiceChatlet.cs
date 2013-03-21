@@ -35,29 +35,38 @@ namespace TickletMeister_VoiceLib
 
         private void Voice_In()
         {
-            byte[] br;
-            r.Bind(new IPEndPoint(IPAddress.Any, inPort));
-            while (true)
+            try
             {
-                br = new byte[16384];
-                r.Receive(br);
-                m_Fifo.Write(br, 0, br.Length);
+                byte[] br;
+                r.Bind(new IPEndPoint(IPAddress.Any, inPort));
+                while (true)
+                {
+                    br = new byte[16384];
+                    r.Receive(br);
+                    m_Fifo.Write(br, 0, br.Length);
+                }
+            }
+            catch
+            {
+                return;//end it ones and for all!
             }
         }
 
         private void Voice_Out(IntPtr data, int size)
         {
             //for Recorder
-            if (m_RecBuffer == null || m_RecBuffer.Length < size)
-                m_RecBuffer = new byte[size];
-            System.Runtime.InteropServices.Marshal.Copy(data, m_RecBuffer, 0, size);
-            //Microphone ==> data ==> m_RecBuffer ==> m_Fifo
-            r.SendTo(m_RecBuffer, new IPEndPoint(IPAddress.Parse(otherEnd), outPort));
-        }
-
-        private void button4_Click(object sender, EventArgs e)
-        {
-            Stop();
+            try
+            {
+                if (m_RecBuffer == null || m_RecBuffer.Length < size)
+                    m_RecBuffer = new byte[size];
+                System.Runtime.InteropServices.Marshal.Copy(data, m_RecBuffer, 0, size);
+                //Microphone ==> data ==> m_RecBuffer ==> m_Fifo
+                r.SendTo(m_RecBuffer, new IPEndPoint(IPAddress.Parse(otherEnd), outPort));
+            }
+            catch
+            {
+                return;
+            }
         }
 
         private void Start()
@@ -71,8 +80,7 @@ namespace TickletMeister_VoiceLib
             }
             catch
             {
-                Stop();
-                throw;
+                return;
             }
         }
 
