@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
@@ -36,6 +37,21 @@ namespace TickletMeister_Clientlet
 
         private String parseServerAddress()
         {
+            String line;
+            try
+            {
+                using (StreamReader sr = new StreamReader("config.txt"))
+                {
+                    line = sr.ReadLine();
+                    line = line.Substring(9);
+                }
+                return line;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("The file could not be read: ");
+                Console.WriteLine(e.Message);
+            }
             return "127.0.0.1";
         }
 
@@ -403,6 +419,11 @@ namespace TickletMeister_Clientlet
                 textBox1.Text = "Server not responsive; try restarting!";
             };
             this.Invoke(SetText);
+        }
+
+        private void Clientlet_Window_Load(object sender, EventArgs e)
+        {
+
         }
         
     }

@@ -80,7 +80,7 @@
             this.textOutputBox.TabIndex = 5;
             this.textOutputBox.Text = "Output";
             // 
-            // Form1
+            // Clientlet_Window
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -90,8 +90,9 @@
             this.Controls.Add(this.echoButton);
             this.Controls.Add(this.textBox1);
             this.Controls.Add(this.endButton);
-            this.Name = "Form1";
+            this.Name = "Clientlet_Window";
             this.Text = "Form1";
+            this.Load += new System.EventHandler(this.Clientlet_Window_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
 
