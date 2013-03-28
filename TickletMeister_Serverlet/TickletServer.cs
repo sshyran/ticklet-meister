@@ -396,6 +396,11 @@ namespace TickletMeister_Serverlet
 
         private void handleMessageDisconnect(Socket clientSocket)
         {
+            int id = entities.SocketToID(clientSocket);
+            lock (tickletQueue)
+            {
+                tickletQueue.Remove(id);
+            }
             entities.removeEntityEntry(clientSocket);
             clientSocket.Close();
         }
