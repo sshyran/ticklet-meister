@@ -35,6 +35,7 @@
             this.echoButton = new System.Windows.Forms.Button();
             this.textInputBox = new System.Windows.Forms.TextBox();
             this.textOutputBox = new System.Windows.Forms.TextBox();
+            this.submitButton = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // endButton
@@ -80,11 +81,22 @@
             this.textOutputBox.TabIndex = 5;
             this.textOutputBox.Text = "Output";
             // 
+            // submitButton
+            // 
+            this.submitButton.Location = new System.Drawing.Point(75, 97);
+            this.submitButton.Name = "submitButton";
+            this.submitButton.Size = new System.Drawing.Size(142, 55);
+            this.submitButton.TabIndex = 6;
+            this.submitButton.Text = "Submit Ticklet!";
+            this.submitButton.UseVisualStyleBackColor = true;
+            this.submitButton.Click += new System.EventHandler(this.submitButton_Click);
+            // 
             // Clientlet_Window
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(292, 273);
+            this.Controls.Add(this.submitButton);
             this.Controls.Add(this.textOutputBox);
             this.Controls.Add(this.textInputBox);
             this.Controls.Add(this.echoButton);
@@ -105,6 +117,7 @@
         private System.Windows.Forms.Button echoButton;
         private System.Windows.Forms.TextBox textInputBox;
         private System.Windows.Forms.TextBox textOutputBox;
+        private System.Windows.Forms.Button submitButton;
     }
 }
 

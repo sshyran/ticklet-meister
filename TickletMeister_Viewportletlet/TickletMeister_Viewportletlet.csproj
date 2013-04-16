@@ -50,6 +50,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Cryptocus.cs" />
     <Compile Include="FifoStream.cs" />
     <Compile Include="TickletServerUtil.cs" />
     <Compile Include="Viewportletlet_Window.cs">

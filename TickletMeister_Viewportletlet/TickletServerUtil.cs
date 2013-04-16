@@ -8,34 +8,18 @@ using System.Net.Sockets;
 
 namespace TickletMeister_Viewportletlet
 {
-    class ConnectionState
-    {
-        private Socket socket;
-        private byte[] buffer;
+    
 
-        public ConnectionState(Socket sock, byte[] buff)
-        {
-            socket = sock;
-            buffer = buff;
-        }
-
-        public Socket getSocket()
-        {
-            return socket;
-        }
-
-        public byte[] getBuffer()
-        {
-            return buffer;
-        }
-    }
-
-    class Message
+    public class Message
     {
         String tag;
         String data;
 
-        public const int BUFF_SIZE = 1024;
+        // public const int BUFF_SIZE = 217; //325 required to encode ticklet
+        //public const int BUFF_SIZE =317;
+        public const int BUFF_SIZE = 325;
+        public const int OFFSET = 41;
+        public const int BUFF_SIZE_UNENCRYPT = 1024;
 
         public Message(String t, String d)
         {
@@ -67,27 +51,29 @@ namespace TickletMeister_Viewportletlet
             try
             {
                 String decode = System.Text.Encoding.Default.GetString(buffer);
+               
                 String tag = decode.Substring(0, decode.IndexOf(' '));
                 String data = decode.Substring(decode.IndexOf(' ') + 1).TrimEnd(trims);
                 ret = new Message(tag, data);
+               
             }
             catch (Exception e)
             {
-                Console.WriteLine("unable to parse message...");
-                for (int i = 0; i < buffer.Length; i++)
-                {
-                    Console.Write(buffer[i]);
-                }
-                Console.WriteLine();
-                Console.WriteLine(e.Message);
+                //Console.WriteLine("unable to parse message...");  NOTE THAT Console.WritieLine CAN CAUSE DEADLOCKS WHEN CALLED FROM MULTIPLE THREADS!!!
+               // for (int i = 0; i < buffer.Length; i++)
+               // {
+               //     Console.Write(buffer[i]);
+               // }
+               // Console.WriteLine();
+               // Console.WriteLine(e.Message);
 
             }
             return ret;
         }
 
-        public static byte[] encodeMessage(Message m)
+        private static byte[] encodeMessageHelper(Message m, int buffSize)
         {
-            byte[] ret = new byte[BUFF_SIZE];
+            byte[] ret = new byte[buffSize];
             int i = 0;
             String tag = m.getTag();
             String data = m.getData();
@@ -108,15 +94,35 @@ namespace TickletMeister_Viewportletlet
             }
             catch (IndexOutOfRangeException e)
             {
-                Console.WriteLine("unable to fill buffer: message failed to send: " + m.ToString());
+                //Console.WriteLine("unable to fill buffer: message failed to send: " + m.ToString());
             }
             return null;
         }
 
-        public static void sendMessageTo(Message message, Socket clientSocket)
+
+        public static byte[] encodeMessage(Message m)
         {
-            byte[] encoding = encodeMessage(message);
-            clientSocket.Send(encoding, 0, BUFF_SIZE, SocketFlags.None);
+            return encodeMessageHelper(m, BUFF_SIZE);
+        }
+
+        public static byte[] encodeMessageUnencrypted(Message m)
+        {
+            return encodeMessageHelper(m, BUFF_SIZE_UNENCRYPT);
+        }
+
+        public static void sendMessageToUnencrypted(Message message, Socket clientSocket)
+        {
+            byte[] encoding = encodeMessageUnencrypted(message);
+            clientSocket.Send(encoding, 0, BUFF_SIZE_UNENCRYPT, SocketFlags.None);
+        }
+
+        public static void sendPublicKeyTo(Socket clientSocket, String key)
+        {
+
+
+            Message message = new Message(PublicKey.KEYCOMMAND, key);
+            sendMessageToUnencrypted(message, clientSocket);
+
         }
 
     }

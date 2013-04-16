@@ -35,6 +35,7 @@ namespace TickletMeister_Serverlet
         private Dictionary<Socket, int> idLookup = new Dictionary<Socket, int>(); //maps the same socket to its id
         private Dictionary<Socket, Thread> listenThreads = new Dictionary<Socket, Thread>(); //maps each client socket to the respective listen thread
         private Dictionary<int, Socket> gurus = new Dictionary<int, Socket>(); //keeps track of the connected gurus
+        private Dictionary<Socket, String> encrypters = new Dictionary<Socket, String>(); //maps each connection to its corresponding public key
         public void addEntityEntry(int id, Socket sock, Thread l)
         {
             lock (entities)
@@ -42,6 +43,22 @@ namespace TickletMeister_Serverlet
                 listenThreads.Add(sock, l);
                 entities.Add(id, sock);
                 idLookup.Add(sock, id);
+                encrypters.Add(sock, null);
+            }
+        }
+        public void associateKey(Socket sock, String publicKey)
+        {
+            lock (entities)
+            {
+                encrypters.Remove(sock);
+                encrypters.Add(sock, publicKey);
+            }
+        }
+        public bool containsSocket(Socket sock)
+        {
+            lock (entities)
+            {
+                return entities.Values.Contains(sock);
             }
         }
         public bool authenticateGuru(Socket sock)
@@ -77,6 +94,7 @@ namespace TickletMeister_Serverlet
                 idLookup.Remove(sock);
                 entities.Remove(id);
                 gurus.Remove(id);
+                encrypters.Remove(sock);
             }
         }
         public Socket IDtoSocket(int id)
@@ -106,6 +124,16 @@ namespace TickletMeister_Serverlet
                 Thread t;
                 listenThreads.TryGetValue(s, out t);
                 return t;
+            }
+        }
+        public String SocketToKey(Socket s)
+        {
+            lock (entities)
+            {
+                String k;
+                encrypters.TryGetValue(s, out k);
+                return k;
+                
             }
         }
         public int SocketToID(Socket s)
@@ -153,9 +181,10 @@ namespace TickletMeister_Serverlet
 
     class TickletServer
     {
+       
         private Socket con = null;
         private ManualResetEvent MRE = new ManualResetEvent(false); //for dealing with async calls regarding initial connection establishment
-        private ManualResetEvent ClientMRE = new ManualResetEvent(false); //for dealing with async calls regarding client-server dataflow
+        
 
         private Entities entities = new Entities();
 
@@ -164,11 +193,12 @@ namespace TickletMeister_Serverlet
 
         private Thread refreshThread;
 
+        private Cryptocus crypt = new Cryptocus();
+
         private void startServer(String[] args)
         {
             int port = 8888;
-
-
+           
             IPAddress[] AddressAr = null;
             String ServerHostName = "";
             try
@@ -237,57 +267,126 @@ namespace TickletMeister_Serverlet
            
         }
 
+        private void listenForMessage(Socket clientSocket, AsyncCallback callback, int buffSize, ManualResetEvent ClientMRE)
+        {
+            try
+            {
+                ClientMRE.Reset();
+                byte[] buffer = new byte[buffSize];
+                ConnectionState state = new ConnectionState(clientSocket, buffer, ClientMRE);
+                clientSocket.BeginReceive(buffer, 0, buffSize, SocketFlags.None, callback, state);
+                ClientMRE.WaitOne();
+            }
+            catch
+            {
+                //it's ok... it happens sometimes... don't worry
+            }
+        }
+
+
         /**
          *  This is called whenever a client attempts to connect to the server
          * */
         private void ClientCallback(IAsyncResult ar)
         {
-            MRE.Set();
+            
             
             Socket serverSocket = (Socket)ar.AsyncState;
             Socket clientSocket = serverSocket.EndAccept(ar);
+            MRE.Set();
             Action listen = () => {
+               // while (true)
+               // {
+                    ManualResetEvent ClientMRE = new ManualResetEvent(false); //for dealing with async calls regarding client-server dataflow
+                    lock (entities)
+                    {
+                        String pkey = entities.SocketToKey(clientSocket);
+                        if (pkey == null)
+                        {
+                            
+                            listenForMessage(clientSocket, new AsyncCallback(OnFirstRecieve), Message.BUFF_SIZE_UNENCRYPT, ClientMRE);
+                            
+                        }
+                       
+                    }
+                //}
+                Console.WriteLine("now listening for encrypted stuff");
                 while (true)
                 {
-                    try
-                    {
-                        ClientMRE.Reset();
-                        byte[] buffer = new byte[Message.BUFF_SIZE];
-                        ConnectionState state = new ConnectionState(clientSocket, buffer);
-                        clientSocket.BeginReceive(buffer, 0, Message.BUFF_SIZE, SocketFlags.None, new AsyncCallback(OnRecieve), state);
-                        ClientMRE.WaitOne();
-                    }
-                    catch (SocketException e)
-                    {
-                        //it's ok... it happens sometimes... don't worry
-                    }
+                         
+                        listenForMessage(clientSocket, new AsyncCallback(OnRecieve), Message.BUFF_SIZE+Message.OFFSET, ClientMRE);
+                        
                 }
 
             };
             Thread listener = new Thread(new ThreadStart(listen));
 
-            int id = gen.generateID();
-            Console.WriteLine("client connected! ... Assigned ID# "+id);
+            lock (gen)
+            {
+                int id = gen.generateID();
+                Console.WriteLine("client connected! ... Assigned ID# " + id);
 
-            entities.addEntityEntry(id, clientSocket, listener);
-            listener.Start();
+                entities.addEntityEntry(id, clientSocket, listener);
+                listener.Start();
+            }
         }
 
-        
-        /**
-         * This is called whenever a client attempts to send data to the server
-         * */
-        private void OnRecieve(IAsyncResult ar)
+
+        private void OnFirstRecieve(IAsyncResult ar)
         {
-            ClientMRE.Set();
+            recieve(ar, Message.decodeMessage);
+        }
+
+        private void recieve(IAsyncResult ar, Func<byte[], Message> funk)
+        {
+            
 
             ConnectionState state = (ConnectionState)ar.AsyncState;
             Socket clientSocket = state.getSocket();
-            Message message = Message.decodeMessage(state.getBuffer());
+            Message message = funk(state.getBuffer());
             Console.WriteLine("reading message: " + message);
-            if(message != null)
-            handleMessage(message, clientSocket);
-            
+            if (message != null)
+                handleMessage(message, clientSocket);
+
+            state.getMRE().Set();
+        }
+
+        /**
+         * This is called whenever a client attempts to send data to the server
+         * we assume that the public key for the client has been determined
+         * */
+        private void OnRecieve(IAsyncResult ar)
+        {
+            try
+            {
+                recieve(ar, (byte[] mess) => { return Message.decodeMessage(crypt.decrypt(mess)); });
+            }
+            catch
+            {
+                Console.WriteLine("client running its mouth...");
+                ConnectionState state = (ConnectionState)ar.AsyncState;
+                Socket clientSocket = state.getSocket();
+                terminateRelationship(clientSocket);
+                
+            }
+        }
+
+        private void terminateRelationship(Socket clientSocket)
+        {
+            if (entities.containsSocket(clientSocket))
+            {
+                int id = entities.SocketToID(clientSocket);
+                lock (tickletQueue)
+                {
+                    if (tickletQueue.Keys.Contains(id))
+                    {
+                        tickletQueue.Remove(id);
+                    }
+                }
+                entities.removeEntityEntry(clientSocket);
+                Console.WriteLine("...relationship terminated");
+            }
+            clientSocket.Close();
         }
 
         /**
@@ -297,6 +396,7 @@ namespace TickletMeister_Serverlet
          * */
         private void RefreshGuruLists()
         {
+            String ticks = "nothing";
             lock (tickletQueue)
             {
                 if (tickletQueue.Count > 0)
@@ -306,14 +406,12 @@ namespace TickletMeister_Serverlet
                     {
                         buildy.Append(";" + "ID# " + id);
                     }
-                    String ticks = buildy.ToString().Substring(buildy.ToString().IndexOf(';') + 1); //remove starting ';'
-                    sendToAllGurus(new Message("RefreshList", ticks));
+                    ticks = buildy.ToString().Substring(buildy.ToString().IndexOf(';') + 1); //remove starting ';'
+                    
                 }
-                else
-                {
-                    sendToAllGurus(new Message("RefreshList", "nothing"));
-                }
+               
             }
+            sendToAllGurus(new Message("RefreshList", ticks));
 
         }
 
@@ -323,7 +421,7 @@ namespace TickletMeister_Serverlet
             {
                 try
                 {
-                    Message.sendMessageTo(message, guru);
+                    sendMessageTo(message, guru);
                 }
                 catch (SocketException e)
                 {
@@ -340,40 +438,53 @@ namespace TickletMeister_Serverlet
             String tag = message.getTag();
             String data = message.getData();
 
-            if (tag.Equals("Echo"))
+            if(tag.Equals(PublicKey.KEYCOMMAND)) //public key recieved from entity
+            {
+                handleIncomingPublicKeyMessage(data, clientSocket);
+            }
+            else if (tag.Equals("Echo")) //echo specified text back to entity
             {
                 handleMessageEcho(data, clientSocket);
             }
-            else if (tag.Equals("Ticklet"))
+            else if (tag.Equals("Ticklet")) //add specified ticklet to ticklet queue
             {
                 handleMessageTicklet(data, clientSocket);
             }
-            else if (tag.Equals("Disconnect"))
+            else if (tag.Equals("Disconnect")) //disconnect the entity
             {
                 handleMessageDisconnect(clientSocket);
             }
-            else if (tag.Equals("Poll"))
+            else if (tag.Equals("Poll")) //poll a ticklet from the ticklet queue
             {
                 handleMessagePoll(data, clientSocket);
             }
-            else if (tag.Equals("AlertAll"))
+            else if (tag.Equals("AlertAll")) //send text message to all connected entities
             {
                 handleMessageAlertAll(data);
             }
-            else if (tag.Equals("DesireVoice"))
+            else if (tag.Equals("DesireVoice")) //send request for voice chat with specified client
             {
                 handleMessageDesireVoice(data, clientSocket);
             }
-            else if (tag.Equals("Authenticate"))
+            else if (tag.Equals("Authenticate")) //designates the entity as a guru; subscribes to periodic tickletQueue refreshment
             {
                 handleMessageAuthenticate(data, clientSocket);
             }
         }
 
+       
+        private void handleIncomingPublicKeyMessage(String data, Socket clientSocket)
+        {
+            
+                entities.associateKey(clientSocket, data);
+                Message.sendPublicKeyTo(clientSocket, crypt.getPublicKey());
+            
+        }
+
         private void handleMessageEcho(String text, Socket clientSocket)
         {
             Message message = new Message("DisplayText", text);
-            Message.sendMessageTo(message, clientSocket);
+            sendMessageTo(message, clientSocket);
         }
 
         /**
@@ -396,15 +507,13 @@ namespace TickletMeister_Serverlet
 
         private void handleMessageDisconnect(Socket clientSocket)
         {
-            int id = entities.SocketToID(clientSocket);
-            lock (tickletQueue)
-            {
-                tickletQueue.Remove(id);
-            }
-            entities.removeEntityEntry(clientSocket);
-            clientSocket.Close();
+            terminateRelationship(clientSocket);
         }
 
+        /**
+         * Poll <index> //polls the specified index from tickletQueue
+         * || Poll dgaf //polls the next element (don't care which one) from tickletQueue
+         * */
         private void handleMessagePoll(String data, Socket clientSocket)
         {
             
@@ -417,7 +526,7 @@ namespace TickletMeister_Serverlet
                         Ticklet tick = tickletQueue.Values.ElementAt(0);
                         String messageString = tick.getID() + " " + tick.getConnectionString();
                         tickletQueue.Remove(0); //TODO change this to be a seperate message type; with this setup, we risk dropping ticklets, but it suffices for the time being
-                        Message.sendMessageTo(new Message("Ticklet", messageString), clientSocket);
+                        sendMessageTo(new Message("T", messageString), clientSocket);
                     }
                     else
                     {
@@ -436,27 +545,30 @@ namespace TickletMeister_Serverlet
                                 Console.WriteLine("polled ID# " + id + " from queue");
                                 String messageString = id + " " + conString;
                                 tickletQueue.Remove(index); //TODO change this to be a seperate message type; with this setup, we risk dropping ticklets, but it suffices for the time being
-                                Message.sendMessageTo(new Message("Ticklet", messageString), clientSocket);
+                                sendMessageTo(new Message("T", messageString), clientSocket);
                             }
                             else
                             {
-                                Message.sendMessageTo(new Message("PollFail", ":("), clientSocket);
+                                sendMessageTo(new Message("PollFail", ":("), clientSocket);
                             }
 
                         }
                         else
                         {
-                            Message.sendMessageTo(new Message("PollFail", ":("), clientSocket);
+                            sendMessageTo(new Message("PollFail", ":("), clientSocket);
                         }
                     }
                 }
                 else
                 {
-                    Message.sendMessageTo(new Message("PollFail", ":("), clientSocket);
+                    sendMessageTo(new Message("PollFail", ":("), clientSocket);
                 }
             }
         }
 
+        /**
+         * AlertAll <message>
+         * */
         private void handleMessageAlertAll(String data)
         {
             //TODO change this so that it updates the field correctly
@@ -466,7 +578,7 @@ namespace TickletMeister_Serverlet
             {
                 try
                 {
-                    Message.sendMessageTo(disp, sock);
+                    sendMessageTo(disp, sock);
                 }
                 catch (SocketException e)
                 {
@@ -506,8 +618,8 @@ namespace TickletMeister_Serverlet
                         String clientString = guruAddress+" "+outPort+" "+inPort;
                         Console.WriteLine("Guru: " + guruString);
                         Console.WriteLine("Client: " + clientString);
-                        Message.sendMessageTo(new Message("GoGoVoiceChat", guruString), guruSocket);
-                        Message.sendMessageTo(new Message("GoGoVoiceChat", clientString), clientSocket);
+                        sendMessageTo(new Message("GoGoVoiceChat", guruString), guruSocket);
+                        sendMessageTo(new Message("GoGoVoiceChat", clientString), clientSocket);
                     }
                 }
                 else
@@ -520,6 +632,19 @@ namespace TickletMeister_Serverlet
         private void handleMessageAuthenticate(String data, Socket guruSocket)
         {
             entities.authenticateGuru(guruSocket);
+        }
+
+        public void sendMessageTo(Message message, Socket clientSocket)
+        {
+            String pkey = entities.SocketToKey(clientSocket);
+            if (pkey != null)
+            {
+                byte[] encoding = crypt.encrypt(Message.encodeMessage(message), pkey);
+                clientSocket.Send(encoding, 0, Message.BUFF_SIZE+Message.OFFSET, SocketFlags.None);
+            }
+            else{
+                //do something on error that the key is invalid/null?
+            }
         }
 
 

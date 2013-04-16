@@ -12,6 +12,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using TickletMeister_VoiceLib;
+using System.Net.Security;
 
 namespace TickletMeister_Clientlet
 {
@@ -23,7 +24,11 @@ namespace TickletMeister_Clientlet
         private Thread socketThread;
         private VoiceChatlet vc;
         private object voiceLock = new object();
+        private Cryptocus crypt = new Cryptocus();
+        private String serverKey = null;
+        private object keyLock = new object();
         
+
        // private String clientID;
 
         public Clientlet_Window()
@@ -33,6 +38,7 @@ namespace TickletMeister_Clientlet
             InitializeComponent();
             socketThread = new System.Threading.Thread(InitializeServerSocket);
             socketThread.Start();
+            Console.WriteLine(crypt.getPublicKey().Length);
         }
 
         private String parseServerAddress()
@@ -62,7 +68,7 @@ namespace TickletMeister_Clientlet
 
         private void InitializeServerSocket()
         {
-            
+            ManualResetEvent InitMRE = new ManualResetEvent(true);
             String serverAddress = parseServerAddress();
             IPAddress serverIP = IPAddress.Parse(serverAddress);
             serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -73,10 +79,9 @@ namespace TickletMeister_Clientlet
                 Console.WriteLine("trying to connect on port " + port);
                 try
                 {
-                    MRE.Reset();
-                    serverSocket.BeginConnect(serverIP, port, new AsyncCallback(OnServerConnect), serverSocket);
-                    
-                    MRE.WaitOne();
+                    InitMRE.Reset();
+                    serverSocket.BeginConnect(serverIP, port, new AsyncCallback(OnServerConnect), InitMRE);
+                    InitMRE.WaitOne();
                     
                 }
                 catch (SocketException e)
@@ -92,61 +97,101 @@ namespace TickletMeister_Clientlet
             
         }
 
+        private void listenForMessage(AsyncCallback callback, int buffSize)
+        {
+            try
+            {
+
+                MRE.Reset();
+                byte[] buffer = new byte[buffSize];
+               
+                serverSocket.BeginReceive(buffer, 0, buffSize, SocketFlags.None, callback, buffer);
+                MRE.WaitOne();
+            }
+            catch (SocketException e)
+            {
+                Console.WriteLine("failed to recieve from server");
+                Console.WriteLine(e.Message);
+            }
+            catch (ObjectDisposedException e)
+            {
+                //we are closing
+            }
+        }
+
+        /**
+         * returns true if the server's public key has yet to be recieved
+         * by this guru
+         * */
+        private bool serverKeyNull()
+        {
+            lock (keyLock)
+            {
+                return serverKey == null;
+            }
+        }
+
         /**
          * This is called upon the client's first connection to the server
          * */
         private void OnServerConnect(IAsyncResult ar)
         {
-            
             MRE.Set();
+            ManualResetEvent InitMRE = (ManualResetEvent)ar.AsyncState;
             try
             {
                 serverSocket.EndConnect(ar);
+                InitMRE.Set();
+                Message.sendPublicKeyTo(serverSocket, crypt.getPublicKey()); //send our public key to the server (unencrypted)
+                
+                //while (serverKeyNull()) //while we don't know the server's public key...
+                //{
+                    listenForMessage(new AsyncCallback(OnFirstRecieve), Message.BUFF_SIZE_UNENCRYPT); //listen for it (it will be unencrypted)
+                    
+                //}
+                while (true)
+                { //then continue listening for encrypted messages
+                   
+                    listenForMessage(new AsyncCallback(OnRecieve), Message.BUFF_SIZE+Message.OFFSET);
+
+                }
+                
+                
             }
             catch (SocketException e)
             {
                 Console.WriteLine("unable to connect to socket ");
                 Console.WriteLine(e.Message);
             }
+            InitMRE.Set();
            
-            CreateAndSendTicklet();
-            //serverSocket.Listen(10);
-            while (true)
-            {
-                try
-                {
-
-                    MRE.Reset();
-                    byte[] buffer = new byte[Message.BUFF_SIZE];
-
-                    serverSocket.BeginReceive(buffer, 0, Message.BUFF_SIZE, SocketFlags.None, new AsyncCallback(OnRecieve), buffer);
-                    MRE.WaitOne();
-                }
-                catch (SocketException e)
-                {
-                    Console.WriteLine("failed to recieve from server");
-                    Console.WriteLine(e.Message);
-                }
-                catch (ObjectDisposedException e)
-                {
-                    //we are closing
-                }
-            }
+            
            
         }
 
-    
         /**
-         * This is called whenever the clientlet recieves data from the server
+         * This is called when the clientlet recieves a message from the server
+         * and doesn't know the server's public key
          * */
-        private void OnRecieve(IAsyncResult ar)
+        private void OnFirstRecieve(IAsyncResult ar)
         {
-            MRE.Set();
+            recieve(ar, Message.decodeMessage);
+        }
+
+        /*
+         * called when a message is recieved
+         * see "OnFirstRecieve" and "OnRecieve"
+         * as well as "OnServerConnect"
+         * */
+        private void recieve(IAsyncResult ar, Func<byte[], Message> funk)
+        {
+            
             try
             {
                 serverSocket.EndReceive(ar);
                 byte[] buffer = (byte[])ar.AsyncState;
-                Message message = Message.decodeMessage(buffer);
+                Message message = funk(buffer);
+                Console.WriteLine(message);
                 handleMessage(message);
             }
             catch (ObjectDisposedException e)
@@ -157,9 +202,16 @@ namespace TickletMeister_Clientlet
             {
                 //we don't need to handle any more messages
             }
-            
-            
-
+            MRE.Set();
+        }
+    
+        /**
+         * This is called whenever the clientlet recieves data from the server
+         * and knows the server's public key
+         * */
+        private void OnRecieve(IAsyncResult ar)
+        {
+            recieve(ar, (byte[] mess) => { return Message.decodeMessage(crypt.decrypt(mess)); });
         }
 
         /**
@@ -169,13 +221,26 @@ namespace TickletMeister_Clientlet
         {
             String tag = m.getTag();
             String data = m.getData();
-            if (tag.Equals("DisplayText"))
+            if (tag.Equals(PublicKey.KEYCOMMAND)) //public key recieved from server
+            {
+                handleMessageIncomingPublicKey(data);
+            }
+            else if (tag.Equals("DisplayText")) //text from server is displayed in window
             {
                 handleMessageDisplayText(data);
             }
-            else if (tag.Equals("GoGoVoiceChat"))
+            else if (tag.Equals("GoGoVoiceChat")) //voice chat is initiated with the provided peer
             {
                 handleMessageGoGoVoiceChat(data);
+            }
+        }
+
+        private void handleMessageIncomingPublicKey(String data)
+        {
+            lock (keyLock)
+            {
+                serverKey = data;
+                Console.WriteLine(serverKey);
             }
         }
 
@@ -235,6 +300,11 @@ namespace TickletMeister_Clientlet
 
         private void CreateAndSendTicklet()
         {
+            Action WaitingForServer = () => { 
+                textBox1.Text = "Waiting for server to accept ticklet...";
+                submitButton.Enabled = false;
+            };
+            this.Invoke(WaitingForServer);
             string ticklet = CreateNewTicklet();
             if (!"".Equals(ticklet)) //if the ticklet is not the empty string
             {
@@ -255,6 +325,7 @@ namespace TickletMeister_Clientlet
             
             try
             {
+                
                 StartRDPSession();
                 String invite = GetInviteString();
                 Console.WriteLine("Ticklet Creation Succeeded!");
@@ -263,6 +334,17 @@ namespace TickletMeister_Clientlet
             catch (System.Runtime.InteropServices.COMException e)
             {
                 Console.WriteLine("Ticklet Creation Failed :(");
+                Console.WriteLine(e.Message);
+                if (rdpSession != null)
+                {
+                    Action TickletFail = () => { 
+                        textBox1.Text = "Ticklet was rejected, please try again";
+                        submitButton.Enabled = true;
+                    };
+                    this.Invoke(TickletFail);
+                    rdpSession.Close();
+                    rdpSession = null;
+                }
             }
 
             return "";
@@ -293,9 +375,10 @@ namespace TickletMeister_Clientlet
         private void StartRDPSession()
         {
             rdpSession = new RDPSession();
+         
             rdpSession.OnAttendeeConnected += new _IRDPSessionEvents_OnAttendeeConnectedEventHandler(OnGuruConnect);
             rdpSession.OnAttendeeDisconnected += new _IRDPSessionEvents_OnAttendeeDisconnectedEventHandler(OnGuruDisconnect);
-            rdpSession.OnControlLevelChangeRequest += new _IRDPSessionEvents_OnControlLevelChangeRequestEventHandler(OnGuruChangeControlLevel);
+            //rdpSession.OnControlLevelChangeRequest += new _IRDPSessionEvents_OnControlLevelChangeRequestEventHandler(OnGuruChangeControlLevel);
             
             //OnControlLevelChangeRequest may not be needed
 
@@ -312,6 +395,7 @@ namespace TickletMeister_Clientlet
             IRDPSRAPIAttendee guru = attendee as IRDPSRAPIAttendee;
             guru.ControlLevel = CTRL_LEVEL.CTRL_LEVEL_INTERACTIVE;
             Console.WriteLine("The Guru now has control!");
+            
         }
 
         /** 
@@ -320,7 +404,14 @@ namespace TickletMeister_Clientlet
         private void OnGuruDisconnect(object e)
         {
             //IRDPSRAPIAttendeeDisconnectInfo info = e as IRDPSRAPIAttendeeDisconnectInfo;
-            ShuffaShutdown();
+            //ShuffaShutdown();
+            Action InterfaceMorph = () =>
+            {
+                //submitButton.Enabled = true;
+                //textBox1.Text = "disconnected from server";
+                textBox1.Text = "Thank you for shopping with Ticklet Meister!";
+            };
+            this.Invoke(InterfaceMorph);
             
         }
 
@@ -331,6 +422,9 @@ namespace TickletMeister_Clientlet
         {
             IRDPSRAPIAttendee guru = attendee as IRDPSRAPIAttendee;
             guru.ControlLevel = level;
+
+            rdpSession.Close();
+            
         }
 
 
@@ -340,15 +434,20 @@ namespace TickletMeister_Clientlet
 
         private void SendTickletToServer(String ticklet)
         {
-            //TODO change this to actually send the ticklet to the server
 
-          
 
-            Action SetText = () => { textBox1.Text = ticklet; }; 
+
+
+            Action SetText = () => { textBox1.Text = "Ticklet Accepted... Please wait for service."; }; 
             this.Invoke(SetText);
             Message submitTickletMessage = new Message("Ticklet", ticklet);
             
-                sendMessageToServer(submitTickletMessage);
+                bool tickletSent = sendMessageToServer(submitTickletMessage);
+                if (!tickletSent)
+                {
+                    Action ActivateButton = () => { submitButton.Enabled = true; };
+                    this.Invoke(ActivateButton);
+                }
                 Console.WriteLine("sending message to server: " + submitTickletMessage);
             
             Console.WriteLine();
@@ -386,7 +485,7 @@ namespace TickletMeister_Clientlet
             }
 
             socketThread.Abort();
-            Console.WriteLine("Sharing Session Closed");
+            //Console.WriteLine("Sharing Session Closed");
             Application.Exit();
         }
 
@@ -397,20 +496,7 @@ namespace TickletMeister_Clientlet
             sendMessageToServer(echoMessage);
         }
 
-        /**
-         *  use this to send communicatoin between the Clientlet and the Serverlet
-         * */
-        private void sendMessageToServer(Message message)
-        {
-            try
-            {
-                Message.sendMessageTo(message, serverSocket);
-            }
-            catch (SocketException e)
-            {
-                DisplayServerConnectionError();
-            }
-        }
+       
 
         private void DisplayServerConnectionError()
         {
@@ -425,6 +511,47 @@ namespace TickletMeister_Clientlet
         {
 
         }
+
+        /**
+         *  use this to send communication between the Clientlet and the Serverlet
+         *  The message is encrypted by means of Cryptocus
+         * */
+        public bool sendMessageToServer(Message message)
+        {
+            try
+            {
+                byte[] encoding = crypt.encrypt(Message.encodeMessage(message), serverKey);
+                Console.WriteLine("encoding length: "+encoding.Length);
+                serverSocket.Send(encoding, 0, encoding.Length, SocketFlags.None);
+                return true;
+            }
+           
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                Console.WriteLine(e.StackTrace);
+                DisplayServerConnectionError();
+            }
+            return false;
+        }
+
+        private void submitButton_Click(object sender, EventArgs e)
+        {
+            
+
+            if (!serverKeyNull())
+            {
+                CreateAndSendTicklet();
+            }
+            else
+            {
+                Action SetText = () => { textBox1.Text = "unable to send ticklet to server"; };
+                this.Invoke(SetText);
+            }
+        }
+
+       
+        
         
     }
 }

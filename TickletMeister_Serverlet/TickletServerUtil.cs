@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
 
 namespace TickletMeister_Serverlet
 {
@@ -12,11 +13,13 @@ namespace TickletMeister_Serverlet
     {
         private Socket socket;
         private byte[] buffer;
+        private ManualResetEvent ClientMRE;
 
-        public ConnectionState(Socket sock, byte[] buff)
+        public ConnectionState(Socket sock, byte[] buff, ManualResetEvent mre)
         {
             socket = sock;
             buffer = buff;
+            ClientMRE = mre;
         }
 
         public Socket getSocket()
@@ -28,14 +31,23 @@ namespace TickletMeister_Serverlet
         {
             return buffer;
         }
+
+        public ManualResetEvent getMRE()
+        {
+            return ClientMRE;
+        }
     }
 
-    class Message
+    public class Message
     {
         String tag;
         String data;
 
-        public const int BUFF_SIZE = 1024;
+        // public const int BUFF_SIZE = 217; //325 required to encode ticklet
+        //public const int BUFF_SIZE =317;
+        public const int BUFF_SIZE = 325;
+        public const int OFFSET = 41;
+        public const int BUFF_SIZE_UNENCRYPT = 1024;
 
         public Message(String t, String d)
         {
@@ -67,6 +79,7 @@ namespace TickletMeister_Serverlet
             try
             {
                 String decode = System.Text.Encoding.Default.GetString(buffer);
+                //Console.WriteLine(decode);
                 String tag = decode.Substring(0, decode.IndexOf(' '));
                 String data = decode.Substring(decode.IndexOf(' ') + 1).TrimEnd(trims);
                 ret = new Message(tag, data);
@@ -85,9 +98,9 @@ namespace TickletMeister_Serverlet
             return ret;
         }
 
-        public static byte[] encodeMessage(Message m)
+        private static byte[] encodeMessageHelper(Message m, int buffSize)
         {
-            byte[] ret = new byte[BUFF_SIZE];
+            byte[] ret = new byte[buffSize];
             int i = 0;
             String tag = m.getTag();
             String data = m.getData();
@@ -113,10 +126,30 @@ namespace TickletMeister_Serverlet
             return null;
         }
 
-        public static void sendMessageTo(Message message, Socket clientSocket)
+
+        public static byte[] encodeMessage(Message m)
         {
-            byte[] encoding = encodeMessage(message);
-            clientSocket.Send(encoding, 0, BUFF_SIZE, SocketFlags.None);
+            return encodeMessageHelper(m, BUFF_SIZE);
+        }
+
+        public static byte[] encodeMessageUnencrypted(Message m)
+        {
+            return encodeMessageHelper(m, BUFF_SIZE_UNENCRYPT);
+        }
+
+        public static void sendMessageToUnencrypted(Message message, Socket clientSocket)
+        {
+            byte[] encoding = encodeMessageUnencrypted(message);
+            clientSocket.Send(encoding, 0, BUFF_SIZE_UNENCRYPT, SocketFlags.None);
+        }
+
+        public static void sendPublicKeyTo(Socket clientSocket, String key)
+        {
+
+
+            Message message = new Message(PublicKey.KEYCOMMAND, key);
+            sendMessageToUnencrypted(message, clientSocket);
+
         }
 
     }
