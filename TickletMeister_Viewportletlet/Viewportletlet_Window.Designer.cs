@@ -188,7 +188,7 @@
             this.Controls.Add(this.axRDPViewer1);
             this.Controls.Add(this.connectButton);
             this.Name = "Viewportletlet_Window";
-            this.Text = "Form1";
+            this.Text = "Viewportletlet";
             ((System.ComponentModel.ISupportInitialize)(this.axRDPViewer1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();

@@ -103,7 +103,7 @@
             this.Controls.Add(this.textBox1);
             this.Controls.Add(this.endButton);
             this.Name = "Clientlet_Window";
-            this.Text = "Form1";
+            this.Text = "Clientlet";
             this.Load += new System.EventHandler(this.Clientlet_Window_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
