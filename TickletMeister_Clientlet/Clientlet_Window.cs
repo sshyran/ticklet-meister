@@ -64,7 +64,7 @@ namespace TickletMeister_Clientlet
                 using (StreamReader sr = new StreamReader("config.txt"))
                 {
                     line = sr.ReadLine();
-                    line = line.Substring(9);
+                   // line = line.Substring(9);
                 }
                 return line;
             }

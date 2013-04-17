@@ -128,7 +128,7 @@ namespace TickletMeister_Viewportletlet
                 using (StreamReader sr = new StreamReader("config.txt"))
                 {
                     line = sr.ReadLine();
-                    line = line.Substring(9);
+                   // line = line.Substring(9);
                 }
                 return line;
             }
@@ -204,8 +204,8 @@ namespace TickletMeister_Viewportletlet
             }
             catch (SocketException e)
             {
-                Console.WriteLine("failed to recieve from server");
-                Console.WriteLine(e.Message);
+               // Console.WriteLine("failed to recieve from server");
+               // Console.WriteLine(e.Message);
             }
             catch (ObjectDisposedException e)
             {
@@ -241,8 +241,8 @@ namespace TickletMeister_Viewportletlet
             }
             catch (SocketException e)
             {
-                Console.WriteLine("unable to connect to socket ");
-                Console.WriteLine(e.Message);
+               // Console.WriteLine("unable to connect to socket ");
+               // Console.WriteLine(e.Message);
             }
             InitMRE.Set();
 
@@ -277,7 +277,7 @@ namespace TickletMeister_Viewportletlet
 
                 Message message = funk(buffer);
 
-                Console.WriteLine("".Equals(message));
+               // Console.WriteLine("".Equals(message));
                 handleMessage(message);
             }
             catch (ObjectDisposedException e)
@@ -293,8 +293,8 @@ namespace TickletMeister_Viewportletlet
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
-                Console.WriteLine(e.StackTrace);
+               // Console.WriteLine(e.Message);
+               // Console.WriteLine(e.StackTrace);
             }
             MRE.Set();
         }
@@ -376,14 +376,14 @@ namespace TickletMeister_Viewportletlet
                     }
                     else
                     {
-                        Console.WriteLine("unable to parse ID#: " + idString);
+                        //Console.WriteLine("unable to parse ID#: " + idString);
 
                     }
                     
                 }
                 catch (IndexOutOfRangeException e)
                 {
-                    Console.WriteLine("invalid Ticklet signature: " + data);
+                    //Console.WriteLine("invalid Ticklet signature: " + data);
                 }
                 
                
@@ -430,17 +430,17 @@ namespace TickletMeister_Viewportletlet
                         }
                         else
                         {
-                            Console.WriteLine("unable to parse ports from data string: " + tokens[1] + " " + tokens[2]);
+                           // Console.WriteLine("unable to parse ports from data string: " + tokens[1] + " " + tokens[2]);
                         }
                     }
                     else
                     {
-                        Console.WriteLine("invalid message format: " + data); //ignore message
+                       // Console.WriteLine("invalid message format: " + data); //ignore message
                     }
                 }
                 catch (SocketException e)
                 {
-                    Console.WriteLine("unable to open voice chat");
+                   // Console.WriteLine("unable to open voice chat");
                 }
             }
 

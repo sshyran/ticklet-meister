@@ -7,6 +7,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Collections;
+using System.IO;
 
 namespace TickletMeister_Serverlet
 {
@@ -197,6 +198,32 @@ namespace TickletMeister_Serverlet
 
         private IPAddress myIP;
 
+        private void SetMyIP()
+        {
+            try //to read config.txt
+            {
+                String address = parseAddressFromConfigFile();
+                myIP = IPAddress.Parse(address);
+            }
+            catch //if we can't read config.txt or the address is invalid, then we'll just use our own inferred ip.
+            {
+                FindMyIP();
+            }
+        }
+
+        private String parseAddressFromConfigFile()
+        {
+            String line;
+            
+                using (StreamReader sr = new StreamReader("config.txt"))
+                {
+                    line = sr.ReadLine();
+                    // line = line.Substring(9);
+                }
+                return line;
+            
+        }
+
         private void FindMyIP()
         {
             IPHostEntry host = Dns.GetHostEntry(Dns.GetHostName());
@@ -213,16 +240,8 @@ namespace TickletMeister_Serverlet
         private void startServer(String[] args)
         {
             int port = 8888;
-            FindMyIP();
-           // IPAddress[] AddressAr = null;
-           // String ServerHostName = "";
-           // try
-           // {
-          //      ServerHostName = Dns.GetHostName();
-           //     IPHostEntry ipEntry = Dns.GetHostByName(ServerHostName);
-           //     AddressAr = ipEntry.AddressList;
-           // }
-            //catch (Exception) { }
+            SetMyIP();
+         
 
             if (args.Length > 0)
             {
@@ -244,8 +263,8 @@ namespace TickletMeister_Serverlet
                 try
                 {
                   
-                    //con.Bind(new IPEndPoint(AddressAr[0], port));
-                    con.Bind(new IPEndPoint(myIP, port)); //TODO this should be changed eventually to something not localhost
+                    
+                    con.Bind(new IPEndPoint(myIP, port)); 
                 }
                 catch (SocketException e)
                 {
@@ -253,7 +272,7 @@ namespace TickletMeister_Serverlet
                 }
             }
             con.Listen(10);
-            Console.WriteLine("server running on port " + port);
+            Console.WriteLine("server running on " +myIP.ToString() +":"+ port);
             while (true)
             {
                 MRE.Reset();
