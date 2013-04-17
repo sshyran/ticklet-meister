@@ -195,19 +195,34 @@ namespace TickletMeister_Serverlet
 
         private Cryptocus crypt = new Cryptocus();
 
+        private IPAddress myIP;
+
+        private void FindMyIP()
+        {
+            IPHostEntry host = Dns.GetHostEntry(Dns.GetHostName());
+            foreach (IPAddress ip in host.AddressList)
+            {
+                if (ip.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    myIP = ip;
+                }
+            }
+            myIP = IPAddress.Parse("127.0.0.1");
+        }
+
         private void startServer(String[] args)
         {
             int port = 8888;
-           
-            IPAddress[] AddressAr = null;
-            String ServerHostName = "";
-            try
-            {
-                ServerHostName = Dns.GetHostName();
-                IPHostEntry ipEntry = Dns.GetHostByName(ServerHostName);
-                AddressAr = ipEntry.AddressList;
-            }
-            catch (Exception) { }
+            FindMyIP();
+           // IPAddress[] AddressAr = null;
+           // String ServerHostName = "";
+           // try
+           // {
+          //      ServerHostName = Dns.GetHostName();
+           //     IPHostEntry ipEntry = Dns.GetHostByName(ServerHostName);
+           //     AddressAr = ipEntry.AddressList;
+           // }
+            //catch (Exception) { }
 
             if (args.Length > 0)
             {
@@ -230,7 +245,7 @@ namespace TickletMeister_Serverlet
                 {
                   
                     //con.Bind(new IPEndPoint(AddressAr[0], port));
-                    con.Bind(new IPEndPoint(IPAddress.Parse("127.0.0.1"), port)); //TODO this should be changed eventually to something not localhost
+                    con.Bind(new IPEndPoint(myIP, port)); //TODO this should be changed eventually to something not localhost
                 }
                 catch (SocketException e)
                 {

@@ -27,6 +27,7 @@ namespace TickletMeister_Clientlet
         private Cryptocus crypt = new Cryptocus();
         private String serverKey = null;
         private object keyLock = new object();
+        private String myIP;
         
 
        // private String clientID;
@@ -36,9 +37,23 @@ namespace TickletMeister_Clientlet
             //clientID = "RandyButternubs"; //TODO make this unique to each person
             
             InitializeComponent();
+            FindMyIP();
             socketThread = new System.Threading.Thread(InitializeServerSocket);
             socketThread.Start();
             Console.WriteLine(crypt.getPublicKey().Length);
+        }
+
+        private void FindMyIP()
+        {
+            IPHostEntry host = Dns.GetHostEntry(Dns.GetHostName());
+            foreach (IPAddress ip in host.AddressList)
+            {
+                if (ip.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    myIP = ip.ToString();
+                }
+            }
+            myIP = "127.0.0.1";
         }
 
         private String parseServerAddress()
@@ -63,7 +78,7 @@ namespace TickletMeister_Clientlet
 
         private String getMyIP()
         {
-            return "127.0.0.1";
+            return myIP;
         }
 
         private void InitializeServerSocket()

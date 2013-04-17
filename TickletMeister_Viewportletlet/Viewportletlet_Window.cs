@@ -12,6 +12,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using TickletMeister_VoiceLib;
+using System.IO;
 
 namespace TickletMeister_Viewportletlet
 {
@@ -31,12 +32,14 @@ namespace TickletMeister_Viewportletlet
         private Cryptocus crypt = new Cryptocus();
         private String serverKey = null;
         private object keyLock = new object();
+        private String myIP;
 
         public Viewportletlet_Window()
         {
             selectedTicklet = null;
             
             InitializeComponent();
+            FindMyIP();
             voiceButton.Enabled = false;
             InitializeTickList();
             InitializeAndSubscribeViewer();
@@ -104,14 +107,42 @@ namespace TickletMeister_Viewportletlet
             
         }
 
+        private void FindMyIP()
+        {
+            IPHostEntry host = Dns.GetHostEntry(Dns.GetHostName());
+            foreach (IPAddress ip in host.AddressList)
+            {
+                if (ip.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    myIP = ip.ToString();
+                }
+            }
+            myIP = "127.0.0.1";
+        }
+
         private String parseServerAddress()
         {
+            String line;
+            try
+            {
+                using (StreamReader sr = new StreamReader("config.txt"))
+                {
+                    line = sr.ReadLine();
+                    line = line.Substring(9);
+                }
+                return line;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("The file could not be read: ");
+                Console.WriteLine(e.Message);
+            }
             return "127.0.0.1";
         }
 
         private String getMyIP()
         {
-            return "127.0.0.1";
+            return myIP;
         }
 
         private void InitializeServerSocket()
