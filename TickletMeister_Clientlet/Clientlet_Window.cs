@@ -51,7 +51,7 @@ namespace TickletMeister_Clientlet
                 if (ip.AddressFamily == AddressFamily.InterNetwork)
                 {
                     myIP = ip.ToString();
-                    break;
+                    return;
                 }
             }
             myIP = "127.0.0.1";

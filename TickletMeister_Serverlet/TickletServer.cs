@@ -232,7 +232,8 @@ namespace TickletMeister_Serverlet
                 if (ip.AddressFamily == AddressFamily.InterNetwork)
                 {
                     myIP = ip;
-                    break;
+                    Console.WriteLine(myIP.ToString());
+                    return;
                 }
             }
             myIP = IPAddress.Parse("127.0.0.1");
