@@ -758,6 +758,46 @@ namespace TickletMeister_Viewportletlet
                 //oopsie
             }
         }
+
+        private void Viewportletlet_Window_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void tickList_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void textInputBox_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void tickletSelectionBox_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void axRDPViewer1_Enter(object sender, EventArgs e)
+        {
+
+        }
+
+        private void textOutputBox_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+
+        }
      
 
         

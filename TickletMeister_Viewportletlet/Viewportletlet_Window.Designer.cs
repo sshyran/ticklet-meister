@@ -39,19 +39,21 @@
             this.textOutputBox = new System.Windows.Forms.TextBox();
             this.textInputBox = new System.Windows.Forms.TextBox();
             this.alertButton = new System.Windows.Forms.Button();
-            this.endButton = new System.Windows.Forms.Button();
             this.pollButton = new System.Windows.Forms.Button();
             this.tickletSelectionBox = new System.Windows.Forms.TextBox();
             this.selectButton = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
             this.voiceButton = new System.Windows.Forms.Button();
             this.tickList = new System.Windows.Forms.ListBox();
+            this.messageButton = new System.Windows.Forms.Button();
+            this.splitter1 = new System.Windows.Forms.Splitter();
+            this.splitter2 = new System.Windows.Forms.Splitter();
             ((System.ComponentModel.ISupportInitialize)(this.axRDPViewer1)).BeginInit();
             this.SuspendLayout();
             // 
             // connectButton
             // 
-            this.connectButton.Location = new System.Drawing.Point(116, 17);
+            this.connectButton.Location = new System.Drawing.Point(87, 17);
             this.connectButton.Name = "connectButton";
             this.connectButton.Size = new System.Drawing.Size(75, 23);
             this.connectButton.TabIndex = 0;
@@ -62,15 +64,16 @@
             // axRDPViewer1
             // 
             this.axRDPViewer1.Enabled = true;
-            this.axRDPViewer1.Location = new System.Drawing.Point(107, 101);
+            this.axRDPViewer1.Location = new System.Drawing.Point(88, 75);
             this.axRDPViewer1.Name = "axRDPViewer1";
             this.axRDPViewer1.OcxState = ((System.Windows.Forms.AxHost.State)(resources.GetObject("axRDPViewer1.OcxState")));
             this.axRDPViewer1.Size = new System.Drawing.Size(1245, 709);
             this.axRDPViewer1.TabIndex = 2;
+            this.axRDPViewer1.Enter += new System.EventHandler(this.axRDPViewer1_Enter);
             // 
             // discoButton
             // 
-            this.discoButton.Location = new System.Drawing.Point(204, 17);
+            this.discoButton.Location = new System.Drawing.Point(169, 17);
             this.discoButton.Name = "discoButton";
             this.discoButton.Size = new System.Drawing.Size(75, 23);
             this.discoButton.TabIndex = 3;
@@ -80,23 +83,32 @@
             // 
             // textOutputBox
             // 
-            this.textOutputBox.Location = new System.Drawing.Point(309, 19);
+            this.textOutputBox.BackColor = System.Drawing.SystemColors.Window;
+            this.textOutputBox.Location = new System.Drawing.Point(1339, 75);
+            this.textOutputBox.MinimumSize = new System.Drawing.Size(0, 200);
+            this.textOutputBox.Multiline = true;
             this.textOutputBox.Name = "textOutputBox";
-            this.textOutputBox.Size = new System.Drawing.Size(947, 20);
+            this.textOutputBox.ReadOnly = true;
+            this.textOutputBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+            this.textOutputBox.Size = new System.Drawing.Size(230, 573);
             this.textOutputBox.TabIndex = 4;
             this.textOutputBox.Text = "Output";
+            this.textOutputBox.TextChanged += new System.EventHandler(this.textOutputBox_TextChanged);
             // 
             // textInputBox
             // 
-            this.textInputBox.Location = new System.Drawing.Point(309, 45);
+            this.textInputBox.Location = new System.Drawing.Point(1339, 674);
+            this.textInputBox.MinimumSize = new System.Drawing.Size(4, 70);
+            this.textInputBox.Multiline = true;
             this.textInputBox.Name = "textInputBox";
-            this.textInputBox.Size = new System.Drawing.Size(947, 20);
+            this.textInputBox.Size = new System.Drawing.Size(230, 70);
             this.textInputBox.TabIndex = 5;
             this.textInputBox.Text = "Input";
+            this.textInputBox.TextChanged += new System.EventHandler(this.textInputBox_TextChanged);
             // 
             // alertButton
             // 
-            this.alertButton.Location = new System.Drawing.Point(1263, 41);
+            this.alertButton.Location = new System.Drawing.Point(331, 17);
             this.alertButton.Name = "alertButton";
             this.alertButton.Size = new System.Drawing.Size(75, 23);
             this.alertButton.TabIndex = 6;
@@ -104,19 +116,9 @@
             this.alertButton.UseVisualStyleBackColor = true;
             this.alertButton.Click += new System.EventHandler(this.alertButton_Click);
             // 
-            // endButton
-            // 
-            this.endButton.Location = new System.Drawing.Point(1263, 13);
-            this.endButton.Name = "endButton";
-            this.endButton.Size = new System.Drawing.Size(75, 23);
-            this.endButton.TabIndex = 7;
-            this.endButton.Text = "Close";
-            this.endButton.UseVisualStyleBackColor = true;
-            this.endButton.Click += new System.EventHandler(this.endButton_Click);
-            // 
             // pollButton
             // 
-            this.pollButton.Location = new System.Drawing.Point(116, 46);
+            this.pollButton.Location = new System.Drawing.Point(169, 46);
             this.pollButton.Name = "pollButton";
             this.pollButton.Size = new System.Drawing.Size(75, 23);
             this.pollButton.TabIndex = 8;
@@ -127,14 +129,15 @@
             // tickletSelectionBox
             // 
             this.tickletSelectionBox.Enabled = false;
-            this.tickletSelectionBox.Location = new System.Drawing.Point(309, 75);
+            this.tickletSelectionBox.Location = new System.Drawing.Point(344, 48);
             this.tickletSelectionBox.Name = "tickletSelectionBox";
-            this.tickletSelectionBox.Size = new System.Drawing.Size(1043, 20);
+            this.tickletSelectionBox.Size = new System.Drawing.Size(989, 20);
             this.tickletSelectionBox.TabIndex = 9;
+            this.tickletSelectionBox.TextChanged += new System.EventHandler(this.tickletSelectionBox_TextChanged);
             // 
             // selectButton
             // 
-            this.selectButton.Location = new System.Drawing.Point(116, 72);
+            this.selectButton.Location = new System.Drawing.Point(87, 46);
             this.selectButton.Name = "selectButton";
             this.selectButton.Size = new System.Drawing.Size(75, 23);
             this.selectButton.TabIndex = 10;
@@ -145,15 +148,16 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(207, 78);
+            this.label1.Location = new System.Drawing.Point(254, 52);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(84, 13);
             this.label1.TabIndex = 11;
             this.label1.Text = "Selected Ticklet";
+            this.label1.Click += new System.EventHandler(this.label1_Click);
             // 
             // voiceButton
             // 
-            this.voiceButton.Location = new System.Drawing.Point(204, 46);
+            this.voiceButton.Location = new System.Drawing.Point(250, 17);
             this.voiceButton.Name = "voiceButton";
             this.voiceButton.Size = new System.Drawing.Size(75, 23);
             this.voiceButton.TabIndex = 12;
@@ -164,23 +168,53 @@
             // tickList
             // 
             this.tickList.FormattingEnabled = true;
-            this.tickList.Location = new System.Drawing.Point(24, 19);
+            this.tickList.Location = new System.Drawing.Point(6, 16);
+            this.tickList.MinimumSize = new System.Drawing.Size(0, 770);
             this.tickList.Name = "tickList";
-            this.tickList.Size = new System.Drawing.Size(59, 797);
+            this.tickList.Size = new System.Drawing.Size(71, 771);
             this.tickList.TabIndex = 13;
+            this.tickList.SelectedIndexChanged += new System.EventHandler(this.tickList_SelectedIndexChanged);
+            // 
+            // messageButton
+            // 
+            this.messageButton.Location = new System.Drawing.Point(1339, 753);
+            this.messageButton.Name = "messageButton";
+            this.messageButton.Size = new System.Drawing.Size(230, 30);
+            this.messageButton.TabIndex = 14;
+            this.messageButton.Text = "Send Message";
+            this.messageButton.UseVisualStyleBackColor = true;
+            this.messageButton.Click += new System.EventHandler(this.button1_Click);
+            // 
+            // splitter1
+            // 
+            this.splitter1.Location = new System.Drawing.Point(0, 0);
+            this.splitter1.Name = "splitter1";
+            this.splitter1.Size = new System.Drawing.Size(3, 811);
+            this.splitter1.TabIndex = 15;
+            this.splitter1.TabStop = false;
+            // 
+            // splitter2
+            // 
+            this.splitter2.Location = new System.Drawing.Point(3, 0);
+            this.splitter2.Name = "splitter2";
+            this.splitter2.Size = new System.Drawing.Size(3, 811);
+            this.splitter2.TabIndex = 16;
+            this.splitter2.TabStop = false;
             // 
             // Viewportletlet_Window
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1387, 837);
+            this.ClientSize = new System.Drawing.Size(1574, 811);
+            this.Controls.Add(this.splitter2);
+            this.Controls.Add(this.splitter1);
+            this.Controls.Add(this.messageButton);
             this.Controls.Add(this.tickList);
             this.Controls.Add(this.voiceButton);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.selectButton);
             this.Controls.Add(this.tickletSelectionBox);
             this.Controls.Add(this.pollButton);
-            this.Controls.Add(this.endButton);
             this.Controls.Add(this.alertButton);
             this.Controls.Add(this.textInputBox);
             this.Controls.Add(this.textOutputBox);
@@ -189,6 +223,7 @@
             this.Controls.Add(this.connectButton);
             this.Name = "Viewportletlet_Window";
             this.Text = "Viewportletlet";
+            this.Load += new System.EventHandler(this.Viewportletlet_Window_Load);
             ((System.ComponentModel.ISupportInitialize)(this.axRDPViewer1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -203,13 +238,15 @@
         private System.Windows.Forms.TextBox textOutputBox;
         private System.Windows.Forms.TextBox textInputBox;
         private System.Windows.Forms.Button alertButton;
-        private System.Windows.Forms.Button endButton;
         private System.Windows.Forms.Button pollButton;
         private System.Windows.Forms.TextBox tickletSelectionBox;
         private System.Windows.Forms.Button selectButton;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Button voiceButton;
         private System.Windows.Forms.ListBox tickList;
+        private System.Windows.Forms.Button messageButton;
+        private System.Windows.Forms.Splitter splitter1;
+        private System.Windows.Forms.Splitter splitter2;
     }
 }
 
