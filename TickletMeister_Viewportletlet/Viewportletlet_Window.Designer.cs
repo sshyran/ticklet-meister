@@ -183,7 +183,7 @@
             this.messageButton.TabIndex = 14;
             this.messageButton.Text = "Send Message";
             this.messageButton.UseVisualStyleBackColor = true;
-            this.messageButton.Click += new System.EventHandler(this.button1_Click);
+            this.messageButton.Click += new System.EventHandler(this.buttonSubmit_Click);
             // 
             // splitter1
             // 

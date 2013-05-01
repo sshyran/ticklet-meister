@@ -37,7 +37,7 @@ namespace TickletMeister_Viewportletlet
         public Viewportletlet_Window()
         {
             selectedTicklet = null;
-            
+            parseServerAddress();
             InitializeComponent();
             FindMyIP();
             voiceButton.Enabled = false;
@@ -794,7 +794,7 @@ namespace TickletMeister_Viewportletlet
 
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void buttonSubmit_Click(object sender, EventArgs e)
         {
 
         }
