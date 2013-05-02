@@ -138,7 +138,7 @@ namespace TickletMeister_Viewportletlet
                 Console.WriteLine("The file could not be read: ");
                 Console.WriteLine(e.Message);
             }
-            return "127.0.0.1";
+            return "192.168.1.15";
         }
 
         private String getMyIP()
