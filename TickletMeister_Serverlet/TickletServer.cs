@@ -675,18 +675,20 @@ namespace TickletMeister_Serverlet
 		
 		private void handleMessageText(String data, Socket clientSocket)
 		{
-			string id = data.Split(' ')[0];
-			string message = data.Split(' ')[1];
+			string id = data.Substring(0,  data.IndexOf(' '));
+            string text = data.Substring(data.IndexOf(' ') + 1);
+            int idd;
+            int.TryParse(id, out idd);
 			 //data contains destination and message text, clientsocket is who message is from
 			 
 			try
 			{
-			Socket destination = entities.IDtoSocket(id);
+			Socket destination = entities.IDtoSocket(idd);
 			int senderID = entities.SocketToID(clientSocket);
 			
-			message = senderID + " " + message;
+			text = senderID + " " + text;
 			
-			Message newMessage = new Message("SendText", message);
+			Message newMessage = new Message("SendText", text);
 			sendMessageTo(newMessage, destination);
 			}
 			catch

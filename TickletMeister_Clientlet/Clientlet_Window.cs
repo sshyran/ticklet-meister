@@ -75,7 +75,7 @@ namespace TickletMeister_Clientlet
                 Console.WriteLine("The file could not be read: ");
                 Console.WriteLine(e.Message);
             }
-            return "127.0.0.1";
+            return "10.26.249.90";
         }
 
         private String getMyIP()
@@ -328,12 +328,14 @@ namespace TickletMeister_Clientlet
             //Action SetText = () => { box.Text = box.Text + newText; }
             //this.Invoke(SetText);
 
-            string id = data.Split(' ')[0];
-            string text = data.Split(' ')[1];
+
+            string id = data.Substring(0,  data.IndexOf(' '));
+            string text = data.Substring(data.IndexOf(' ') + 1);
+            guruID = id;
 
             Action SetText = () =>
             {
-                chatOutputBox.Text = chatOutputBox.Text + id + ": " + text + '\n';
+                chatOutputBox.Text = chatOutputBox.Text + "\n" + id + ": " + text;
             };
             this.Invoke(SetText);
         }
@@ -595,8 +597,10 @@ namespace TickletMeister_Clientlet
             String messageData = guruID + " " + chatInputBox.Text;
             Message message = new Message("SendText", messageData);
 
+
             chatOutputBox.Text = chatOutputBox.Text + "Me: " + chatInputBox.Text + '\n';
             sendMessageToServer(message);
+            chatInputBox.Text = " ";
         }
 
        
