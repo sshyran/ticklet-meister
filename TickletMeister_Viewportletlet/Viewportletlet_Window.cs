@@ -813,7 +813,7 @@ namespace TickletMeister_Viewportletlet
 
         private void buttonSubmit_Click(object sender, EventArgs e)
         {
-            String messageData = selectedTicklet.getClientID() + " " + textInputBox.Text;
+            String messageData = selectedTicklet.getID() + " " + textInputBox.Text;
             Message message = new Message("SendText", messageData);
 
             textOutputBox.Text = textOutputBox.Text + "Guru: " + textInputBox.Text + '\n';
