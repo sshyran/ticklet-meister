@@ -598,9 +598,14 @@ namespace TickletMeister_Clientlet
             Message message = new Message("SendText", messageData);
 
 
-            chatOutputBox.Text = chatOutputBox.Text + "Me: " + chatInputBox.Text + '\n';
+            chatOutputBox.Text = chatOutputBox.Text + "\r\n" + "Me: " + chatInputBox.Text +"\r\n";
             sendMessageToServer(message);
             chatInputBox.Text = " ";
+        }
+
+        private void chatOutputBox_TextChanged(object sender, EventArgs e)
+        {
+
         }
 
        

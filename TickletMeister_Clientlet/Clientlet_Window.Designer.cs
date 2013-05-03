@@ -105,6 +105,7 @@
             this.chatOutputBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
             this.chatOutputBox.Size = new System.Drawing.Size(306, 206);
             this.chatOutputBox.TabIndex = 7;
+            this.chatOutputBox.TextChanged += new System.EventHandler(this.chatOutputBox_TextChanged);
             // 
             // chatInputBox
             // 

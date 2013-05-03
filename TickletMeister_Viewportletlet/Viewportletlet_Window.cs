@@ -816,7 +816,7 @@ namespace TickletMeister_Viewportletlet
             String messageData = selectedTicklet.getID() + " " + textInputBox.Text;
             Message message = new Message("SendText", messageData);
 
-            textOutputBox.Text = textOutputBox.Text + "Guru: " + textInputBox.Text + '\n';
+            textOutputBox.Text = textOutputBox.Text + "\r\n" + "Guru: " + textInputBox.Text + "\r\n";
             sendMessageToServer(message);
             textInputBox.Text = " ";
         }
