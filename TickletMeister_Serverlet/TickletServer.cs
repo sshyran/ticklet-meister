@@ -506,8 +506,11 @@ namespace TickletMeister_Serverlet
             {
                 handleMessageAuthenticate(data, clientSocket);
             }
+			else if (tag.Equals("SendText")) //data contains destination and message text, clientsocket is who message is from
+			{
+				handleMessageText(data, clientSocket);
+			}
         }
-
        
         private void handleIncomingPublicKeyMessage(String data, Socket clientSocket)
         {
@@ -669,6 +672,29 @@ namespace TickletMeister_Serverlet
         {
             entities.authenticateGuru(guruSocket);
         }
+		
+		private void handleMessageText(String data, Socket clientSocket)
+		{
+			string id = data.Split(' ')[0];
+			string message = data.Split(' ')[1];
+			 //data contains destination and message text, clientsocket is who message is from
+			 
+			try
+			{
+			Socket destination = entities.IDtoSocket(id);
+			int senderID = entities.SocketToID(clientSocket);
+			
+			message = senderID + " " + message;
+			
+			Message newMessage = new Message("SendText", message);
+			sendMessageTo(newMessage, destination);
+			}
+			catch
+			{
+				//do nothing -- dont try to send message
+			}
+			
+		}
 
         public void sendMessageTo(Message message, Socket clientSocket)
         {

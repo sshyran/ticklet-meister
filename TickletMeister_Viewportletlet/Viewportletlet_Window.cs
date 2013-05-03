@@ -138,7 +138,7 @@ namespace TickletMeister_Viewportletlet
                 Console.WriteLine("The file could not be read: ");
                 Console.WriteLine(e.Message);
             }
-            return "192.168.1.15";
+            return "127.0.0.1";
         }
 
         private String getMyIP()
@@ -341,7 +341,24 @@ namespace TickletMeister_Viewportletlet
             {
                 handleMessageRefreshList(data);
             }
+            else if (tag.Equals("SendText"))
+            {
+                handleMessageSendText(data);
+            }
         }
+
+        private void handleMessageSendText(String data)
+        {
+            string id = data.Split(' ')[0];
+            string text = data.Split(' ')[1];
+
+            Action SetText = () =>
+            {
+                textOutputBox.Text = textOutputBox.Text + id + ": " + text + '\n';
+            };
+            this.Invoke(SetText);
+        }
+
 
         private void handleMessageIncomingPublicKey(String data)
         {
@@ -796,7 +813,10 @@ namespace TickletMeister_Viewportletlet
 
         private void buttonSubmit_Click(object sender, EventArgs e)
         {
+            String messageData = selectedTicklet.getClientID() + " " + textInputBox.Text;
+            Message message = new Message("SendText", messageData);
 
+            sendMessageToServer(message);
         }
      
 

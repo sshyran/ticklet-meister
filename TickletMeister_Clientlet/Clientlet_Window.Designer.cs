@@ -30,23 +30,16 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.endButton = new System.Windows.Forms.Button();
             this.textBox1 = new System.Windows.Forms.TextBox();
             this.echoButton = new System.Windows.Forms.Button();
             this.textInputBox = new System.Windows.Forms.TextBox();
             this.textOutputBox = new System.Windows.Forms.TextBox();
             this.submitButton = new System.Windows.Forms.Button();
+            this.endButton = new System.Windows.Forms.Button();
+            this.chatOutputBox = new System.Windows.Forms.TextBox();
+            this.chatInputBox = new System.Windows.Forms.TextBox();
+            this.chatMessageButton = new System.Windows.Forms.Button();
             this.SuspendLayout();
-            // 
-            // endButton
-            // 
-            this.endButton.Location = new System.Drawing.Point(205, 238);
-            this.endButton.Name = "endButton";
-            this.endButton.Size = new System.Drawing.Size(75, 23);
-            this.endButton.TabIndex = 1;
-            this.endButton.Text = "End Session";
-            this.endButton.UseVisualStyleBackColor = true;
-            this.endButton.Click += new System.EventHandler(this.endButton_Click);
             // 
             // textBox1
             // 
@@ -91,11 +84,57 @@
             this.submitButton.UseVisualStyleBackColor = true;
             this.submitButton.Click += new System.EventHandler(this.submitButton_Click);
             // 
+            // endButton
+            // 
+            this.endButton.Location = new System.Drawing.Point(205, 238);
+            this.endButton.Name = "endButton";
+            this.endButton.Size = new System.Drawing.Size(75, 23);
+            this.endButton.TabIndex = 1;
+            this.endButton.Text = "End Session";
+            this.endButton.UseVisualStyleBackColor = true;
+            this.endButton.Click += new System.EventHandler(this.endButton_Click);
+            // 
+            // chatOutputBox
+            // 
+            this.chatOutputBox.BackColor = System.Drawing.SystemColors.Window;
+            this.chatOutputBox.Location = new System.Drawing.Point(306, 7);
+            this.chatOutputBox.MinimumSize = new System.Drawing.Size(4, 200);
+            this.chatOutputBox.Multiline = true;
+            this.chatOutputBox.Name = "chatOutputBox";
+            this.chatOutputBox.ReadOnly = true;
+            this.chatOutputBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+            this.chatOutputBox.Size = new System.Drawing.Size(306, 206);
+            this.chatOutputBox.TabIndex = 7;
+            this.chatOutputBox.Text = "Output";
+            // 
+            // chatInputBox
+            // 
+            this.chatInputBox.Location = new System.Drawing.Point(306, 219);
+            this.chatInputBox.MinimumSize = new System.Drawing.Size(4, 70);
+            this.chatInputBox.Multiline = true;
+            this.chatInputBox.Name = "chatInputBox";
+            this.chatInputBox.Size = new System.Drawing.Size(230, 86);
+            this.chatInputBox.TabIndex = 8;
+            this.chatInputBox.Text = "Input";
+            // 
+            // chatMessageButton
+            // 
+            this.chatMessageButton.Location = new System.Drawing.Point(529, 219);
+            this.chatMessageButton.Name = "chatMessageButton";
+            this.chatMessageButton.Size = new System.Drawing.Size(83, 86);
+            this.chatMessageButton.TabIndex = 15;
+            this.chatMessageButton.Text = "Send Message";
+            this.chatMessageButton.UseVisualStyleBackColor = true;
+            this.chatMessageButton.Click += new System.EventHandler(this.chatMessageButton_Click);
+            // 
             // Clientlet_Window
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(292, 273);
+            this.ClientSize = new System.Drawing.Size(624, 306);
+            this.Controls.Add(this.chatMessageButton);
+            this.Controls.Add(this.chatInputBox);
+            this.Controls.Add(this.chatOutputBox);
             this.Controls.Add(this.submitButton);
             this.Controls.Add(this.textOutputBox);
             this.Controls.Add(this.textInputBox);
@@ -112,12 +151,15 @@
 
         #endregion
 
-        private System.Windows.Forms.Button endButton;
         private System.Windows.Forms.TextBox textBox1;
         private System.Windows.Forms.Button echoButton;
         private System.Windows.Forms.TextBox textInputBox;
         private System.Windows.Forms.TextBox textOutputBox;
         private System.Windows.Forms.Button submitButton;
+        private System.Windows.Forms.Button endButton;
+        private System.Windows.Forms.TextBox chatOutputBox;
+        private System.Windows.Forms.TextBox chatInputBox;
+        private System.Windows.Forms.Button chatMessageButton;
     }
 }
 

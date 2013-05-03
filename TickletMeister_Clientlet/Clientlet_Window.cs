@@ -28,6 +28,7 @@ namespace TickletMeister_Clientlet
         private String serverKey = null;
         private object keyLock = new object();
         private String myIP;
+        private String guruID;
         
 
        // private String clientID;
@@ -35,7 +36,7 @@ namespace TickletMeister_Clientlet
         public Clientlet_Window()
         {
             //clientID = "RandyButternubs"; //TODO make this unique to each person
-            
+            guruID = "";
             InitializeComponent();
             FindMyIP();
             socketThread = new System.Threading.Thread(InitializeServerSocket);
@@ -249,6 +250,10 @@ namespace TickletMeister_Clientlet
             {
                 handleMessageGoGoVoiceChat(data);
             }
+            else if (tag.Equals("SendText"))
+            {
+                handleMessageSendText(data);
+            }
         }
 
         private void handleMessageIncomingPublicKey(String data)
@@ -312,6 +317,25 @@ namespace TickletMeister_Clientlet
                 }
             }
 
+        }
+
+        private void handleMessageSendText(String data)
+        {
+            // data contains: id messageText
+            //parse data for text and id and concat to the output window
+            //store the id privately so we can use later
+            //use invoke (because its a gui)
+            //Action SetText = () => { box.Text = box.Text + newText; }
+            //this.Invoke(SetText);
+
+            string id = data.Split(' ')[0];
+            string text = data.Split(' ')[1];
+
+            Action SetText = () =>
+            {
+                chatOutputBox.Text = chatOutputBox.Text + id + ": " + text + '\n';
+            };
+            this.Invoke(SetText);
         }
 
         private void CreateAndSendTicklet()
@@ -564,6 +588,14 @@ namespace TickletMeister_Clientlet
                 Action SetText = () => { textBox1.Text = "unable to send ticklet to server"; };
                 this.Invoke(SetText);
             }
+        }
+
+        private void chatMessageButton_Click(object sender, EventArgs e)
+        {
+            String messageData = guruID + " " + chatInputBox.Text;
+            Message message = new Message("SendText", messageData);
+
+            sendMessageToServer(message);
         }
 
        
