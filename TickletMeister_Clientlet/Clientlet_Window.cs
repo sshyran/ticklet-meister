@@ -595,6 +595,7 @@ namespace TickletMeister_Clientlet
             String messageData = guruID + " " + chatInputBox.Text;
             Message message = new Message("SendText", messageData);
 
+            chatOutputBox.Text = chatOutputBox.Text + "Me: " + chatInputBox.Text + '\n';
             sendMessageToServer(message);
         }
 

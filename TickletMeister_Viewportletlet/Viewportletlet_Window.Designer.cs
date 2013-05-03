@@ -92,7 +92,6 @@
             this.textOutputBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
             this.textOutputBox.Size = new System.Drawing.Size(167, 501);
             this.textOutputBox.TabIndex = 4;
-            this.textOutputBox.Text = "Output";
             this.textOutputBox.TextChanged += new System.EventHandler(this.textOutputBox_TextChanged);
             // 
             // textInputBox
@@ -103,7 +102,6 @@
             this.textInputBox.Name = "textInputBox";
             this.textInputBox.Size = new System.Drawing.Size(167, 70);
             this.textInputBox.TabIndex = 5;
-            this.textInputBox.Text = "Input";
             this.textInputBox.TextChanged += new System.EventHandler(this.textInputBox_TextChanged);
             // 
             // alertButton

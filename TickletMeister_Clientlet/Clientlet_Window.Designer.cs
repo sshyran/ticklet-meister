@@ -105,7 +105,6 @@
             this.chatOutputBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
             this.chatOutputBox.Size = new System.Drawing.Size(306, 206);
             this.chatOutputBox.TabIndex = 7;
-            this.chatOutputBox.Text = "Output";
             // 
             // chatInputBox
             // 
@@ -115,7 +114,6 @@
             this.chatInputBox.Name = "chatInputBox";
             this.chatInputBox.Size = new System.Drawing.Size(230, 86);
             this.chatInputBox.TabIndex = 8;
-            this.chatInputBox.Text = "Input";
             // 
             // chatMessageButton
             // 
