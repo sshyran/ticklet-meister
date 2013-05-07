@@ -53,6 +53,7 @@
             // 
             // connectButton
             // 
+            this.connectButton.Enabled = false;
             this.connectButton.Location = new System.Drawing.Point(87, 5);
             this.connectButton.Name = "connectButton";
             this.connectButton.Size = new System.Drawing.Size(75, 23);
@@ -73,6 +74,7 @@
             // 
             // discoButton
             // 
+            this.discoButton.Enabled = false;
             this.discoButton.Location = new System.Drawing.Point(169, 5);
             this.discoButton.Name = "discoButton";
             this.discoButton.Size = new System.Drawing.Size(75, 23);

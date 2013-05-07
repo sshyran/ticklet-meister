@@ -424,6 +424,14 @@ namespace TickletMeister_Viewportletlet
                     {
                         SelectTicklet(new Ticklet(m, id, "RandyButternubs")); //TODO make this meaningful?
                         waitingForServer = false;
+                        Action SetStuff = () =>
+                        {
+                            selectButton.Enabled = false;
+                            pollButton.Enabled = false;
+                            connectButton.Enabled = true;
+                            discoButton.Enabled = true;
+                        };
+                        this.Invoke(SetStuff);
                     }
                     else
                     {
@@ -445,8 +453,14 @@ namespace TickletMeister_Viewportletlet
         {
             lock (LoxyPants)
             {
-                waitingForServer = false; //stop waiting TODO make this better?
+                waitingForServer = false;   
             }
+            Action SetStuff = () =>
+            {
+                pollButton.Enabled = true;
+                selectButton.Enabled = true;
+            };
+            this.Invoke(SetStuff);
             displayOutputText("unable to poll from ticklet queue");
         }
 
@@ -596,12 +610,13 @@ namespace TickletMeister_Viewportletlet
 
                 if (AttemptConnectionToSelectedTicklet())
                 {
-                    // Console.WriteLine("Successfully connected to " + selectedTicklet.getClientID() + "!");
+                    connectButton.Enabled = false;
+                    discoButton.Enabled = true;
                 }
                 else
                 {
                     DisplayClientConnectionErrorMessage();
-                }
+                } 
                 setCooldown();
             }
         }
@@ -670,8 +685,11 @@ namespace TickletMeister_Viewportletlet
 
                     axRDPViewer1.Disconnect();
                 }
-                connectButton.Enabled = true;
+                discoButton.Enabled = false;
+                connectButton.Enabled = false;
                 voiceButton.Enabled = false;
+                selectButton.Enabled = true;
+                pollButton.Enabled = true;
                 setCooldown();
             }
         }
@@ -738,6 +756,8 @@ namespace TickletMeister_Viewportletlet
                         waitingForServer = true;
                         sendMessageToServer(m);
                     }
+                    pollButton.Enabled = false;
+                    selectButton.Enabled = false;
                 }
                 setCooldown();
             }
@@ -769,6 +789,8 @@ namespace TickletMeister_Viewportletlet
                             waitingForServer = true;
                             sendMessageToServer(m);
                         }
+                        selectButton.Enabled = false;
+                        pollButton.Enabled = false;
                     }
                 }
                 catch (InvalidCastException ex)
@@ -881,14 +903,16 @@ namespace TickletMeister_Viewportletlet
                 {
                     if (selectedTicklet == null)
                     {
-                        textOutputBox.Text = textOutputBox.Text + "\r\n" + "!!NO CLIENT CONNECTED!!";                   
+                        textOutputBox.Text = textOutputBox.Text + "\r\n" + "!!NO CLIENT CONNECTED!!";
                     }
+                    else
+                    {
+                        String messageData = Message.trimString(selectedTicklet.getID() + " " + textInputBox.Text, "SendText");
+                        Message message = new Message("SendText", messageData);
 
-                    String messageData = Message.trimString(selectedTicklet.getID() + " " + textInputBox.Text, "SendText");
-                    Message message = new Message("SendText", messageData);
-
-                    textOutputBox.Text = textOutputBox.Text + "\r\n" + "Guru: " + messageData.Substring(messageData.IndexOf(' ') + 1);
-                    sendMessageToServer(message);
+                        textOutputBox.Text = textOutputBox.Text + "\r\n" + "Guru: " + messageData.Substring(messageData.IndexOf(' ') + 1);
+                        sendMessageToServer(message);
+                    }
                 }
                 textInputBox.Text = "";
                 setCooldown();
