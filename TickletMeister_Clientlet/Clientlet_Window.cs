@@ -29,6 +29,9 @@ namespace TickletMeister_Clientlet
         private object keyLock = new object();
         private String myIP;
         private String guruID;
+        private Thread cooldownThread;
+        private object coolLock = new object();
+        private bool cooldown; //prevent buttons from being pressed too frequently, thus overwhelming the server
         
 
        // private String clientID;
@@ -39,9 +42,39 @@ namespace TickletMeister_Clientlet
             guruID = "";
             InitializeComponent();
             FindMyIP();
+            cooldownThread = new System.Threading.Thread(Cooldown);
+            cooldownThread.Start();
             socketThread = new System.Threading.Thread(InitializeServerSocket);
             socketThread.Start();
             Console.WriteLine(crypt.getPublicKey().Length);
+        }
+
+        private void Cooldown() //cooldown of 1/2 second per command
+        {
+            while (true)
+            {
+                Thread.Sleep(500);
+                lock (coolLock)
+                {
+                    cooldown = true;
+                }
+            }
+        }
+
+        private bool cool()
+        {
+            lock (coolLock)
+            {
+                return cooldown;
+            }
+        }
+
+        private void setCooldown()
+        {
+            lock (coolLock)
+            {
+                cooldown = false;
+            }
         }
 
         private void FindMyIP()
@@ -533,9 +566,13 @@ namespace TickletMeister_Clientlet
 
         private void echoButton_Click(object sender, EventArgs e)
         {
-            String text = textInputBox.Text;
-            Message echoMessage = new Message("Echo", text);
-            sendMessageToServer(echoMessage);
+            if (cool())
+            {
+                String text = textInputBox.Text;
+                Message echoMessage = new Message("Echo", text);
+                sendMessageToServer(echoMessage);
+                setCooldown();
+            }
         }
 
        
@@ -579,28 +616,35 @@ namespace TickletMeister_Clientlet
 
         private void submitButton_Click(object sender, EventArgs e)
         {
-            
+            if (cool())
+            {
 
-            if (!serverKeyNull())
-            {
-                CreateAndSendTicklet();
-            }
-            else
-            {
-                Action SetText = () => { textBox1.Text = "unable to send ticklet to server"; };
-                this.Invoke(SetText);
+                if (!serverKeyNull())
+                {
+                    CreateAndSendTicklet();
+                }
+                else
+                {
+                    Action SetText = () => { textBox1.Text = "unable to send ticklet to server"; };
+                    this.Invoke(SetText);
+                }
+                setCooldown();
             }
         }
 
         private void chatMessageButton_Click(object sender, EventArgs e)
         {
-            String messageData = Message.trimString(guruID + " " + chatInputBox.Text, "SendText");
-            Message message = new Message("SendText", messageData);
+            if (cool())
+            {
+                String messageData = Message.trimString(guruID + " " + chatInputBox.Text, "SendText");
+                Message message = new Message("SendText", messageData);
 
 
-            chatOutputBox.Text = chatOutputBox.Text + "\r\n" + "Me: " + messageData;
-            sendMessageToServer(message);
-            chatInputBox.Text = " ";
+                chatOutputBox.Text = chatOutputBox.Text + "\r\n" + "Me: " + messageData;
+                sendMessageToServer(message);
+                chatInputBox.Text = "";
+                setCooldown();
+            }
         }
 
         private void chatOutputBox_TextChanged(object sender, EventArgs e)

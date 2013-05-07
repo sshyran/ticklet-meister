@@ -33,6 +33,9 @@ namespace TickletMeister_Viewportletlet
         private String serverKey = null;
         private object keyLock = new object();
         private String myIP;
+        private Thread cooldownThread;
+        private bool cooldown; //prevent buttons from being pressed too frequently, thus overwhelming the server
+        private object coolLock = new object();
 
         public Viewportletlet_Window()
         {
@@ -43,9 +46,39 @@ namespace TickletMeister_Viewportletlet
             voiceButton.Enabled = false;
             InitializeTickList();
             InitializeAndSubscribeViewer();
+            cooldownThread = new System.Threading.Thread(Cooldown);
+            cooldownThread.Start();
             socketThread = new System.Threading.Thread(InitializeServerSocket);
             socketThread.Start();
             
+        }
+
+        private void Cooldown() // half second cooldown on abilities
+        {
+            while (true)
+            {
+                Thread.Sleep(500);
+                lock (coolLock)
+                {
+                    cooldown = true;
+                }
+            }
+        }
+
+        private bool cool()
+        {
+            lock (coolLock)
+            {
+                return cooldown;
+            }
+        }
+
+        private void setCooldown()
+        {
+            lock (coolLock)
+            {
+                cooldown = false;
+            }
         }
 
         private void InitializeTickList()
@@ -556,17 +589,20 @@ namespace TickletMeister_Viewportletlet
 
         private void connectButton_Click(object sender, EventArgs e)
         {
-            //TODO remove this line as well as corresponding text area
-           //SelectTicklet( new Ticklet("<E><A KH=\"+GFA1Dtyk3xs1Ho4ecDRK5Ddloo=\" ID=\"TickletMeister\"/><C><T ID=\"1\" SID=\"4120104621\"><L P=\"2851\" N=\"2002:81ba:bcc2::81ba:bcc2\"/><L P=\"2852\" N=\"129.186.188.194\"/></T></C></E>", "RandyButternubs"));
+            if (cool())
+            {
+                //TODO remove this line as well as corresponding text area
+                //SelectTicklet( new Ticklet("<E><A KH=\"+GFA1Dtyk3xs1Ho4ecDRK5Ddloo=\" ID=\"TickletMeister\"/><C><T ID=\"1\" SID=\"4120104621\"><L P=\"2851\" N=\"2002:81ba:bcc2::81ba:bcc2\"/><L P=\"2852\" N=\"129.186.188.194\"/></T></C></E>", "RandyButternubs"));
 
-            if (AttemptConnectionToSelectedTicklet())
-            {
-               // Console.WriteLine("Successfully connected to " + selectedTicklet.getClientID() + "!");
-            }
-            else
-            {
-                DisplayClientConnectionErrorMessage();
-                
+                if (AttemptConnectionToSelectedTicklet())
+                {
+                    // Console.WriteLine("Successfully connected to " + selectedTicklet.getClientID() + "!");
+                }
+                else
+                {
+                    DisplayClientConnectionErrorMessage();
+                }
+                setCooldown();
             }
         }
 
@@ -617,24 +653,27 @@ namespace TickletMeister_Viewportletlet
 
         private void discoButton_Click(object sender, EventArgs e)
         {
-            
-            lock (voiceLock)
+            if (cool())
             {
-                if (vc != null)
+                lock (voiceLock)
                 {
-                    vc.endChat();
-                    vc = null;
+                    if (vc != null)
+                    {
+                        vc.endChat();
+                        vc = null;
+                    }
                 }
-            }
 
-            lock (LoxyPants)
-            {
-                SelectTicklet(null);
+                lock (LoxyPants)
+                {
+                    SelectTicklet(null);
 
-                axRDPViewer1.Disconnect();
+                    axRDPViewer1.Disconnect();
+                }
+                connectButton.Enabled = true;
+                voiceButton.Enabled = false;
+                setCooldown();
             }
-            connectButton.Enabled = true;
-            voiceButton.Enabled = false;
         }
 
         private void ShuffaShutdown()
@@ -668,35 +707,49 @@ namespace TickletMeister_Viewportletlet
 
         private void alertButton_Click(object sender, EventArgs e)
         {
-            String text = textInputBox.Text;
-            Message m = new Message("AlertAll", text);
-            sendMessageToServer(m);
+            if (cool())
+            {
+                String text = textInputBox.Text;
+                Message m = new Message("AlertAll", text);
+                sendMessageToServer(m);
+                setCooldown();
+            }
         }
 
         private void endButton_Click(object sender, EventArgs e)
         {
-            ShuffaShutdown();
+            if (cool())
+            {
+                ShuffaShutdown();
+                setCooldown();
+            }
         }
 
         private void pollButton_Click(object sender, EventArgs e)
         {
-            lock (LoxyPants)
+            if (cool())
             {
-                if (!waitingForServer)
+                lock (LoxyPants)
                 {
-                    SelectTicklet(null);
-                    Message m = new Message("Poll", "dgaf");
-                    waitingForServer = true;
-                    sendMessageToServer(m);
+                    if (!waitingForServer)
+                    {
+                        SelectTicklet(null);
+                        Message m = new Message("Poll", "dgaf");
+                        waitingForServer = true;
+                        sendMessageToServer(m);
+                    }
                 }
+                setCooldown();
             }
 
         }
 
         private void selectButton_Click(object sender, EventArgs e)
         {
-            try
+            if (cool())
             {
+                try
+                {
                     String sel = null;
                     lock (tickList)
                     {
@@ -717,34 +770,43 @@ namespace TickletMeister_Viewportletlet
                             sendMessageToServer(m);
                         }
                     }
-            }
-            catch (InvalidCastException ex)
-            {
-                //do nothing
-            }
-            catch (ArgumentNullException ex)
-            {
-                //do nothing
-            }
-            catch (InvalidExpressionException ex)
-            {
-               // Console.WriteLine("Update improperly formatted");
-               // Console.WriteLine(ex.Message);
+                }
+                catch (InvalidCastException ex)
+                {
+                    //do nothing
+                }
+                catch (ArgumentNullException ex)
+                {
+                    //do nothing
+                }
+                catch (InvalidExpressionException ex)
+                {
+                    // Console.WriteLine("Update improperly formatted");
+                    // Console.WriteLine(ex.Message);
+                }
+                finally
+                {
+                    setCooldown();
+                }
             }
         }
 
         private void voiceButton_Click(object sender, EventArgs e)
         {
-            lock (LoxyPants)
+            if (cool())
             {
-                if (selectedTicklet == null)
-                    return;
-                voiceButton.Enabled = false;
-                int id = selectedTicklet.getID();
-                int inPort = 5000;
-                int outPort = 6000;
-                String messageString = id + " " + inPort + " " + outPort;
-                sendMessageToServer(new Message("DesireVoice", messageString));
+                lock (LoxyPants)
+                {
+                    if (selectedTicklet == null)
+                        return;
+                    voiceButton.Enabled = false;
+                    int id = selectedTicklet.getID();
+                    int inPort = 5000;
+                    int outPort = 6000;
+                    String messageString = id + " " + inPort + " " + outPort;
+                    sendMessageToServer(new Message("DesireVoice", messageString));
+                }
+                setCooldown();
             }
             
         }
@@ -813,12 +875,16 @@ namespace TickletMeister_Viewportletlet
 
         private void buttonSubmit_Click(object sender, EventArgs e)
         {
-            String messageData = Message.trimString(selectedTicklet.getID() + " " + textInputBox.Text, "SendText");
-            Message message = new Message("SendText", messageData);
+            if (cool())
+            {
+                String messageData = Message.trimString(selectedTicklet.getID() + " " + textInputBox.Text, "SendText");
+                Message message = new Message("SendText", messageData);
 
-            textOutputBox.Text = textOutputBox.Text + "\r\n" + "Guru: " + messageData;
-            sendMessageToServer(message);
-            textInputBox.Text = " ";
+                textOutputBox.Text = textOutputBox.Text + "\r\n" + "Guru: " + messageData;
+                sendMessageToServer(message);
+                textInputBox.Text = "";
+                setCooldown();
+            }
         }
      
 
