@@ -75,6 +75,8 @@ namespace TickletMeister_Serverlet
          * Given an input string s and a tag, this function
          * returns a truncated version of s that will fit in a buffer
          * with the contents "<tag> <space> <s>"
+         * 
+         * if the input string is empty, a space character is returned
          * */
         public static String trimString(String s, String tag)
         {
@@ -83,15 +85,19 @@ namespace TickletMeister_Serverlet
             {
                 return s.Substring(0, BUFF_SIZE - tagLength);
             }
+            else if ("".Equals(s))
+            {
+                return " ";
+            }
             else return s;
         }
 
         public static Message decodeMessage(byte[] buffer)
         {
             Message ret = null;
-            char[] trims = new char[2];
+            char[] trims = new char[1];
             trims[0] = (char)0;
-            trims[1] = ' ';
+            //trims[1] = ' ';
             try
             {
                 String decode = System.Text.Encoding.Default.GetString(buffer);
