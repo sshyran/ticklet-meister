@@ -37,14 +37,20 @@ namespace TickletMeister_Serverlet
         private Dictionary<Socket, Thread> listenThreads = new Dictionary<Socket, Thread>(); //maps each client socket to the respective listen thread
         private Dictionary<int, Socket> gurus = new Dictionary<int, Socket>(); //keeps track of the connected gurus
         private Dictionary<Socket, String> encrypters = new Dictionary<Socket, String>(); //maps each connection to its corresponding public key
-        public void addEntityEntry(int id, Socket sock, Thread l)
+        private int CLIENT_LIMIT = 33; //maximum number of entities that can have socket connections with the server
+        public bool addEntityEntry(int id, Socket sock, Thread l)
         {
             lock (entities)
             {
-                listenThreads.Add(sock, l);
-                entities.Add(id, sock);
-                idLookup.Add(sock, id);
-                encrypters.Add(sock, null);
+                if (listenThreads.Count() < CLIENT_LIMIT)
+                {
+                    listenThreads.Add(sock, l);
+                    entities.Add(id, sock);
+                    idLookup.Add(sock, id);
+                    encrypters.Add(sock, null);
+                    return true;
+                }
+                return false;
             }
         }
         public void associateKey(Socket sock, String publicKey)
@@ -185,7 +191,6 @@ namespace TickletMeister_Serverlet
        
         private Socket con = null;
         private ManualResetEvent MRE = new ManualResetEvent(false); //for dealing with async calls regarding initial connection establishment
-        
 
         private Entities entities = new Entities();
 
@@ -241,6 +246,7 @@ namespace TickletMeister_Serverlet
 
         private void startServer(String[] args)
         {
+            
             int port = 8888;
             SetMyIP();
          
@@ -362,8 +368,15 @@ namespace TickletMeister_Serverlet
                 int id = gen.generateID();
                 Console.WriteLine("client connected! ... Assigned ID# " + id);
 
-                entities.addEntityEntry(id, clientSocket, listener);
-                listener.Start();
+                bool suc = entities.addEntityEntry(id, clientSocket, listener);
+                if (suc)
+                {
+                    listener.Start();
+                }
+                else
+                {
+                    Console.WriteLine("Too many clients connected! " + id + " was let go... :(");
+                }
             }
         }
 
@@ -584,7 +597,7 @@ namespace TickletMeister_Serverlet
                                 String conString = tick.getConnectionString();
                                 Console.WriteLine("polled ID# " + id + " from queue");
                                 String messageString = id + " " + conString;
-                                tickletQueue.Remove(index); //TODO change this to be a seperate message type; with this setup, we risk dropping ticklets, but it suffices for the time being
+                                tickletQueue.Remove(index);
                                 sendMessageTo(new Message("T", messageString), clientSocket);
                             }
                             else
@@ -701,14 +714,22 @@ namespace TickletMeister_Serverlet
 
         public void sendMessageTo(Message message, Socket clientSocket)
         {
-            String pkey = entities.SocketToKey(clientSocket);
-            if (pkey != null)
+            try
             {
-                byte[] encoding = crypt.encrypt(Message.encodeMessage(message), pkey);
-                clientSocket.Send(encoding, 0, Message.BUFF_SIZE+Message.OFFSET, SocketFlags.None);
+                String pkey = entities.SocketToKey(clientSocket);
+                if (pkey != null)
+                {
+                    byte[] encoding = crypt.encrypt(Message.encodeMessage(message), pkey);
+                    clientSocket.Send(encoding, 0, Message.BUFF_SIZE + Message.OFFSET, SocketFlags.None);
+                }
+                else
+                {
+                    //do something on error that the key is invalid/null?
+                }
             }
-            else{
-                //do something on error that the key is invalid/null?
+            catch //if we can't send to a client, then kick them off
+            {
+                terminateRelationship(clientSocket);
             }
         }
 

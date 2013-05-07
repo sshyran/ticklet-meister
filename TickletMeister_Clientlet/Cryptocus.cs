@@ -50,15 +50,21 @@ namespace TickletMeister_Clientlet
         }
         public byte[] encrypt(byte[] raw, String key)
         {
-            rsa.FromXmlString(key);
-            byte[] encrypted = rsa.Encrypt(raw, false);
-            return encrypted;
+            lock (rsa)
+            {
+                rsa.FromXmlString(key);
+                byte[] encrypted = rsa.Encrypt(raw, false);
+                return encrypted;
+            }
         }
         public byte[] decrypt(byte[] encrypted)
         {
-            rsa.FromXmlString(myPrivateKey);
-            byte[] decrypted = rsa.Decrypt(encrypted, false);
-            return decrypted;
+            lock (rsa)
+            {
+                rsa.FromXmlString(myPrivateKey);
+                byte[] decrypted = rsa.Decrypt(encrypted, false);
+                return decrypted;
+            }
 
         }
         public String getPublicKey()

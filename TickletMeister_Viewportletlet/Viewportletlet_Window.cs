@@ -773,15 +773,19 @@ namespace TickletMeister_Viewportletlet
                 {
                     lock (LoxyPants)
                     {
+                        bool changeButtons = false;
                         if (!waitingForServer)
                         {
                             //SelectTicklet(null);
                             Message m = new Message("Poll", "dgaf");
                             waitingForServer = true;
-                            sendMessageToServer(m);
+                            changeButtons = sendMessageToServer(m);
                         }
-                        pollButton.Enabled = false;
-                        selectButton.Enabled = false;
+                        if (changeButtons)
+                        {
+                            pollButton.Enabled = false;
+                            selectButton.Enabled = false;
+                        }
                     }
                 }
                 else
@@ -816,14 +820,18 @@ namespace TickletMeister_Viewportletlet
 
                     lock (LoxyPants)
                     {
+                        bool changeButtons = false;
                         if (!waitingForServer)
                         {
                             Message m = new Message("Poll", index + "");
                             waitingForServer = true;
-                            sendMessageToServer(m);
+                            changeButtons = sendMessageToServer(m);
                         }
-                        selectButton.Enabled = false;
-                        pollButton.Enabled = false;
+                        if (changeButtons)
+                        {
+                            selectButton.Enabled = false;
+                            pollButton.Enabled = false;
+                        }
                     }
                 }
                 catch (InvalidCastException ex)
@@ -876,21 +884,17 @@ namespace TickletMeister_Viewportletlet
         /**
          *  use this to send communication between the Clientlet and the Serverlet
          * */
-        public void sendMessageToServer(Message message)
+        public bool sendMessageToServer(Message message)
         {
             try
             {
-
-                
                 byte[] encoding = crypt.encrypt(Message.encodeMessage(message), serverKey);
-               
                 serverSocket.Send(encoding, 0, encoding.Length, SocketFlags.None);
-                
+                return true;
             }
             catch
             {
-                
-                //oopsie
+                return false;
             }
         }
 
