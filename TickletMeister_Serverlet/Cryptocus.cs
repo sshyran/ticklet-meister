@@ -26,7 +26,8 @@ namespace TickletMeister_Serverlet
             //const int KEYSIZE = 1600; //max of 189 characters 
             // const int KEYSIZE = 1824; //max of 217 characters
             // const int KEYSIZE = 2864;
-            const int KEYSIZE = 2928;
+            //const int KEYSIZE = 2928;
+            const int KEYSIZE = 3200;
             
             /*
              * RSA tutorial code (for initiation)
