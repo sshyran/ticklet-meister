@@ -71,6 +71,21 @@ namespace TickletMeister_Serverlet
             return tag + " " + data;
         }
 
+        /**
+         * Given an input string s and a tag, this function
+         * returns a truncated version of s that will fit in a buffer
+         * with the contents "<tag> <space> <s>"
+         * */
+        public static String trimString(String s, String tag)
+        {
+            int tagLength = tag.Length + 1;
+            if (s.Length + tagLength >= BUFF_SIZE)
+            {
+                return s.Substring(0, BUFF_SIZE - tagLength);
+            }
+            else return s;
+        }
+
         public static Message decodeMessage(byte[] buffer)
         {
             Message ret = null;

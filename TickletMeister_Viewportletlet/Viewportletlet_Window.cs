@@ -354,7 +354,7 @@ namespace TickletMeister_Viewportletlet
 
             Action SetText = () =>
             {
-                textOutputBox.Text = textOutputBox.Text + "\n" + id + ": " + text;
+                textOutputBox.Text = textOutputBox.Text + "\r\n" + "Client #"+id + ": " + text;
             };
             this.Invoke(SetText);
         }
@@ -813,10 +813,10 @@ namespace TickletMeister_Viewportletlet
 
         private void buttonSubmit_Click(object sender, EventArgs e)
         {
-            String messageData = selectedTicklet.getID() + " " + textInputBox.Text;
+            String messageData = Message.trimString(selectedTicklet.getID() + " " + textInputBox.Text, "SendText");
             Message message = new Message("SendText", messageData);
 
-            textOutputBox.Text = textOutputBox.Text + "\r\n" + "Guru: " + textInputBox.Text + "\r\n";
+            textOutputBox.Text = textOutputBox.Text + "\r\n" + "Guru: " + messageData;
             sendMessageToServer(message);
             textInputBox.Text = " ";
         }

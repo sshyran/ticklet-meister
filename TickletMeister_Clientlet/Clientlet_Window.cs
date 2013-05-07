@@ -335,7 +335,7 @@ namespace TickletMeister_Clientlet
 
             Action SetText = () =>
             {
-                chatOutputBox.Text = chatOutputBox.Text + "\n" + id + ": " + text;
+                chatOutputBox.Text = chatOutputBox.Text + "\r\n" + "Guru #"+id + ": " + text;
             };
             this.Invoke(SetText);
         }
@@ -594,11 +594,11 @@ namespace TickletMeister_Clientlet
 
         private void chatMessageButton_Click(object sender, EventArgs e)
         {
-            String messageData = guruID + " " + chatInputBox.Text;
+            String messageData = Message.trimString(guruID + " " + chatInputBox.Text, "SendText");
             Message message = new Message("SendText", messageData);
 
 
-            chatOutputBox.Text = chatOutputBox.Text + "\r\n" + "Me: " + chatInputBox.Text +"\r\n";
+            chatOutputBox.Text = chatOutputBox.Text + "\r\n" + "Me: " + messageData;
             sendMessageToServer(message);
             chatInputBox.Text = " ";
         }

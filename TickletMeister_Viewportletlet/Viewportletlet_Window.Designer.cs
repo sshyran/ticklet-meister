@@ -92,6 +92,7 @@
             this.textOutputBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
             this.textOutputBox.Size = new System.Drawing.Size(167, 501);
             this.textOutputBox.TabIndex = 4;
+            this.textOutputBox.Text = "MESSAGES!";
             this.textOutputBox.TextChanged += new System.EventHandler(this.textOutputBox_TextChanged);
             // 
             // textInputBox
