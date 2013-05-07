@@ -538,46 +538,40 @@ namespace TickletMeister_Viewportletlet
 
         private void OnConnectToClient(object sender, EventArgs e)
         {
-            
+            HideTickletList();
         }
 
         private void OnDisconnectFromClient(object sender, _IRDPSessionEvents_OnConnectionTerminatedEvent e)
         {
-            axRDPViewer1.Disconnect();
+            try
+            {
+                axRDPViewer1.Disconnect();
+            }
+            catch { }
+            ShowTickletList();
         }
 
         private void OnConnectionFail(object sender, EventArgs e)
         {
-            axRDPViewer1.Disconnect();
+            try
+            {
+                axRDPViewer1.Disconnect();
+            }
+            catch { }
+            ShowTickletList();
         }
 
         private void OnError(object sender, _IRDPSessionEvents_OnErrorEvent e)
         {
-            axRDPViewer1.Disconnect();
-        }
-
-        private void OnConnectToClient()
-        {
-            HideTickletList();
-            
-        }
-
-        private void OnError(object info)
-        {
-            axRDPViewer1.Disconnect();
-        }
-
-        private void OnDisconnectFromClient(int reason, int info)
-        {
-            axRDPViewer1.Disconnect();
+            try
+            {
+                axRDPViewer1.Disconnect();
+            }
+            catch { }
             ShowTickletList();
-            
         }
 
-        private void OnConnectionFail()
-        {
-            axRDPViewer1.Disconnect();
-        }
+        
 
         private void ShowTickletList()
         {
@@ -864,8 +858,8 @@ namespace TickletMeister_Viewportletlet
                     {
                         voiceButton.Enabled = false;
                         int id = selectedTicklet.getID();
-                        int inPort = 5000;
-                        int outPort = 6000;
+                        int inPort = 5555;
+                        int outPort = 6666;
                         String messageString = id + " " + inPort + " " + outPort;
                         sendMessageToServer(new Message("DesireVoice", messageString));
                     }

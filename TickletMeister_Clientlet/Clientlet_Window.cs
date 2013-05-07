@@ -493,6 +493,14 @@ namespace TickletMeister_Clientlet
                 textBox1.Text = "Thank you for shopping with Ticklet Meister!";
             };
             this.Invoke(InterfaceMorph);
+            try
+            {
+                vc.endChat();
+            }
+            catch
+            {
+                //ending voice chat
+            }
             
         }
 

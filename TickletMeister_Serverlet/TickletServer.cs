@@ -466,17 +466,19 @@ namespace TickletMeister_Serverlet
 
         private void sendToAllGurus(Message message)
         {
-            foreach (Socket guru in entities.listGurus())
-            {
-                try
+            Dictionary<int, Socket>.ValueCollection list = entities.listGurus(); //clone the list
+                foreach (Socket guru in list)
                 {
-                    sendMessageTo(message, guru);
+                    try
+                    {
+                        sendMessageTo(message, guru);
+                    }
+                    catch (SocketException e)
+                    {
+                        //ignore if sending didn't work
+                    }
                 }
-                catch (SocketException e)
-                {
-                    //ignore if sending didn't work
-                }
-            }
+            
         }
 
         /**
