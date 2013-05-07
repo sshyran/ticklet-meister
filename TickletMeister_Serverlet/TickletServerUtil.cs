@@ -46,7 +46,7 @@ namespace TickletMeister_Serverlet
         // public const int BUFF_SIZE = 217; //325 required to encode ticklet
         //public const int BUFF_SIZE =317;
         //public const int BUFF_SIZE = 325;
-        public const int BUFF_SIZE = 359;
+        public const int BUFF_SIZE = 400;
         public const int OFFSET = 41;
         public const int BUFF_SIZE_UNENCRYPT = 1024;
 
