@@ -364,10 +364,10 @@ namespace TickletMeister_Clientlet
 
             string id = data.Substring(0,  data.IndexOf(' '));
             string text = data.Substring(data.IndexOf(' ') + 1);
-            guruID = id;
 
             Action SetText = () =>
             {
+                guruID = id;
                 chatOutputBox.Text = chatOutputBox.Text + "\r\n" + "Guru #"+id + ": " + text;
             };
             this.Invoke(SetText);
@@ -636,13 +636,19 @@ namespace TickletMeister_Clientlet
         {
             if (cool())
             {
-                String messageData = Message.trimString(guruID + " " + chatInputBox.Text, "SendText");
-                Message message = new Message("SendText", messageData);
+                if (!"".Equals(guruID))
+                {
+                    String messageData = Message.trimString(guruID + " " + chatInputBox.Text, "SendText");
+                    Message message = new Message("SendText", messageData);
 
-
-                chatOutputBox.Text = chatOutputBox.Text + "\r\n" + "Me: " + messageData;
-                sendMessageToServer(message);
-                chatInputBox.Text = "";
+                    chatOutputBox.Text = chatOutputBox.Text + "\r\n" + "Me: " + messageData.Substring(messageData.IndexOf(' ') + 1);
+                    sendMessageToServer(message);
+                    chatInputBox.Text = "";
+                }
+                else
+                {
+                    chatOutputBox.Text = chatOutputBox.Text + "\r\n" + "!!NO GURU CONNECTED!!";
+                }
                 setCooldown();
             }
         }

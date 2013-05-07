@@ -813,7 +813,7 @@ namespace TickletMeister_Viewportletlet
 
         private void displayOutputText(String text)
         {
-            Action SetText = () => { textOutputBox.Text = text; };
+            Action SetText = () => { tickletSelectionBox.Text = text; };
             this.Invoke(SetText);
         }
 
@@ -877,11 +877,19 @@ namespace TickletMeister_Viewportletlet
         {
             if (cool())
             {
-                String messageData = Message.trimString(selectedTicklet.getID() + " " + textInputBox.Text, "SendText");
-                Message message = new Message("SendText", messageData);
+                lock (LoxyPants)
+                {
+                    if (selectedTicklet == null)
+                    {
+                        textOutputBox.Text = textOutputBox.Text + "\r\n" + "!!NO CLIENT CONNECTED!!";                   
+                    }
 
-                textOutputBox.Text = textOutputBox.Text + "\r\n" + "Guru: " + messageData;
-                sendMessageToServer(message);
+                    String messageData = Message.trimString(selectedTicklet.getID() + " " + textInputBox.Text, "SendText");
+                    Message message = new Message("SendText", messageData);
+
+                    textOutputBox.Text = textOutputBox.Text + "\r\n" + "Guru: " + messageData.Substring(messageData.IndexOf(' ') + 1);
+                    sendMessageToServer(message);
+                }
                 textInputBox.Text = "";
                 setCooldown();
             }
