@@ -70,7 +70,7 @@
             this.axRDPViewer1.OcxState = ((System.Windows.Forms.AxHost.State)(resources.GetObject("axRDPViewer1.OcxState")));
             this.axRDPViewer1.Size = new System.Drawing.Size(1041, 635);
             this.axRDPViewer1.TabIndex = 2;
-            this.axRDPViewer1.Enter += new System.EventHandler(this.axRDPViewer1_Enter);
+            //this.axRDPViewer1.Enter += new System.EventHandler(this.axRDPViewer1_Enter);
             // 
             // discoButton
             // 

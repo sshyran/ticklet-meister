@@ -40,6 +40,7 @@ namespace TickletMeister_Clientlet
         {
             //clientID = "RandyButternubs"; //TODO make this unique to each person
             guruID = "";
+            Application.ApplicationExit += CloseAndShutDown;
             InitializeComponent();
             FindMyIP();
             cooldownThread = new System.Threading.Thread(Cooldown);
@@ -47,6 +48,11 @@ namespace TickletMeister_Clientlet
             socketThread = new System.Threading.Thread(InitializeServerSocket);
             socketThread.Start();
             Console.WriteLine(crypt.getPublicKey().Length);
+        }
+
+        private void CloseAndShutDown(object sender, EventArgs e)
+        {
+            ShuffaShutdown();
         }
 
         private void Cooldown() //cooldown of 1/2 second per command
@@ -515,7 +521,7 @@ namespace TickletMeister_Clientlet
 
             Action SetText = () => { textBox1.Text = "Ticklet Accepted... Please wait for service."; }; 
             this.Invoke(SetText);
-            Message submitTickletMessage = new Message("Ticklet", ticklet);
+            Message submitTickletMessage = new Message("T", ticklet);
             
                 bool tickletSent = sendMessageToServer(submitTickletMessage);
                 if (!tickletSent)
@@ -532,7 +538,7 @@ namespace TickletMeister_Clientlet
 
         private void endButton_Click(object sender, EventArgs e)
         {
-            ShuffaShutdown();
+            Application.Exit();
         }
 
         /**
@@ -541,25 +547,38 @@ namespace TickletMeister_Clientlet
          * */
         private void ShuffaShutdown()
         {
-            
-            if(rdpSession != null)
-            rdpSession.Close();
-
-            if (serverSocket != null)
+            try
+            {
+                rdpSession.Close();
+            }
+            catch
+            {
+                //we are closing
+            }
+            try
             {
                 sendMessageToServer(new Message("Disconnect", "Me"));
                 serverSocket.Close();
             }
+            catch
+            {
+                //we are closing
+            }
             lock (voiceLock)
             {
-                if (vc != null)
+                try
                 {
                     vc.endChat();
                     vc = null;
                 }
+                catch
+                {
+                    //we are closing
+                }
             }
 
             socketThread.Abort();
+            cooldownThread.Abort();
             //Console.WriteLine("Sharing Session Closed");
             Application.Exit();
         }

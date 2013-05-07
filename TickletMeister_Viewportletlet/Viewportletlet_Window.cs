@@ -127,6 +127,7 @@ namespace TickletMeister_Viewportletlet
 
         private void InitializeAndSubscribeViewer()
         {
+            Application.ApplicationExit += CloseAndShutDown;
            // rdpViewer = new RDPViewer();
            // Console.WriteLine(axRDPViewer1 == null);
             //rdpViewer.OnConnectionEstablished += new _IRDPSessionEvents_OnConnectionEstablishedEventHandler(OnConnectToClient);
@@ -138,6 +139,11 @@ namespace TickletMeister_Viewportletlet
           //  rdpViewer.OnError += new _IRDPSessionEvents_OnErrorEventHandler(OnError);
             axRDPViewer1.OnError += new _IRDPSessionEvents_OnErrorEventHandler(OnError);
             
+        }
+
+        private void CloseAndShutDown(object sender, EventArgs e)
+        {
+            ShuffaShutdown();
         }
 
         private void FindMyIP()
@@ -277,6 +283,11 @@ namespace TickletMeister_Viewportletlet
             {
                // Console.WriteLine("unable to connect to socket ");
                // Console.WriteLine(e.Message);
+            }
+            catch (ObjectDisposedException e)
+            {
+                //we are closing
+
             }
             InitMRE.Set();
 
@@ -532,17 +543,17 @@ namespace TickletMeister_Viewportletlet
 
         private void OnDisconnectFromClient(object sender, _IRDPSessionEvents_OnConnectionTerminatedEvent e)
         {
-
+            axRDPViewer1.Disconnect();
         }
 
         private void OnConnectionFail(object sender, EventArgs e)
         {
-
+            axRDPViewer1.Disconnect();
         }
 
         private void OnError(object sender, _IRDPSessionEvents_OnErrorEvent e)
         {
-
+            axRDPViewer1.Disconnect();
         }
 
         private void OnConnectToClient()
@@ -553,18 +564,19 @@ namespace TickletMeister_Viewportletlet
 
         private void OnError(object info)
         {
-
+            axRDPViewer1.Disconnect();
         }
 
         private void OnDisconnectFromClient(int reason, int info)
         {
+            axRDPViewer1.Disconnect();
             ShowTickletList();
             
         }
 
         private void OnConnectionFail()
         {
-            
+            axRDPViewer1.Disconnect();
         }
 
         private void ShowTickletList()
@@ -681,9 +693,8 @@ namespace TickletMeister_Viewportletlet
 
                 lock (LoxyPants)
                 {
-                    SelectTicklet(null);
-
                     axRDPViewer1.Disconnect();
+                    SelectTicklet(null);
                 }
                 discoButton.Enabled = false;
                 connectButton.Enabled = false;
@@ -697,13 +708,17 @@ namespace TickletMeister_Viewportletlet
         private void ShuffaShutdown()
         {
 
-            if (serverSocket != null)
+            try
             {
                 if (!serverKeyNull())
                 {
                     sendMessageToServer(new Message("Disconnect", "Me"));
                 }
                 serverSocket.Close();
+            }
+            catch
+            {
+                //we are closing
             }
             lock (voiceLock)
             {
@@ -713,11 +728,18 @@ namespace TickletMeister_Viewportletlet
                     vc = null;
                 }
             }
-
+            try
+            {
+                axRDPViewer1.Disconnect();
+            }
+            catch
+            {
+                //we are closing
+            }
             socketThread.Abort();
-            
+            cooldownThread.Abort();
             //Console.WriteLine("Sharing Session Closed");
-            Application.Exit();
+            //Application.Exit();
         }
 
         
@@ -747,17 +769,24 @@ namespace TickletMeister_Viewportletlet
         {
             if (cool())
             {
-                lock (LoxyPants)
+                if (!serverKeyNull())
                 {
-                    if (!waitingForServer)
+                    lock (LoxyPants)
                     {
-                        SelectTicklet(null);
-                        Message m = new Message("Poll", "dgaf");
-                        waitingForServer = true;
-                        sendMessageToServer(m);
+                        if (!waitingForServer)
+                        {
+                            //SelectTicklet(null);
+                            Message m = new Message("Poll", "dgaf");
+                            waitingForServer = true;
+                            sendMessageToServer(m);
+                        }
+                        pollButton.Enabled = false;
+                        selectButton.Enabled = false;
                     }
-                    pollButton.Enabled = false;
-                    selectButton.Enabled = false;
+                }
+                else
+                {
+                    displayOutputText("unable to connect to server");
                 }
                 setCooldown();
             }
@@ -779,6 +808,10 @@ namespace TickletMeister_Viewportletlet
                     {
                         throw new ArgumentNullException("no items selected");
                     }
+                    if (serverKeyNull())
+                    {
+                        throw new ArgumentNullException("no connection made to server");
+                    }
                     int index = getIDFromTickListEntry(sel);
 
                     lock (LoxyPants)
@@ -799,7 +832,7 @@ namespace TickletMeister_Viewportletlet
                 }
                 catch (ArgumentNullException ex)
                 {
-                    //do nothing
+                    displayOutputText(ex.Message);
                 }
                 catch (InvalidExpressionException ex)
                 {
@@ -819,14 +852,15 @@ namespace TickletMeister_Viewportletlet
             {
                 lock (LoxyPants)
                 {
-                    if (selectedTicklet == null)
-                        return;
-                    voiceButton.Enabled = false;
-                    int id = selectedTicklet.getID();
-                    int inPort = 5000;
-                    int outPort = 6000;
-                    String messageString = id + " " + inPort + " " + outPort;
-                    sendMessageToServer(new Message("DesireVoice", messageString));
+                    if (selectedTicklet != null)
+                    {
+                        voiceButton.Enabled = false;
+                        int id = selectedTicklet.getID();
+                        int inPort = 5000;
+                        int outPort = 6000;
+                        String messageString = id + " " + inPort + " " + outPort;
+                        sendMessageToServer(new Message("DesireVoice", messageString));
+                    }
                 }
                 setCooldown();
             }
@@ -885,10 +919,10 @@ namespace TickletMeister_Viewportletlet
 
         }
 
-        private void axRDPViewer1_Enter(object sender, EventArgs e)
-        {
+        //private void axRDPViewer1_Enter(object sender, EventArgs e)
+        //{
 
-        }
+        //}
 
         private void textOutputBox_TextChanged(object sender, EventArgs e)
         {

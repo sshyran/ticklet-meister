@@ -482,7 +482,7 @@ namespace TickletMeister_Serverlet
             {
                 handleMessageEcho(data, clientSocket);
             }
-            else if (tag.Equals("Ticklet")) //add specified ticklet to ticklet queue
+            else if (tag.Equals("T")) //add specified ticklet to ticklet queue
             {
                 handleMessageTicklet(data, clientSocket);
             }
