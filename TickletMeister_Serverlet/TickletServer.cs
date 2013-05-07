@@ -563,8 +563,9 @@ namespace TickletMeister_Serverlet
                     if ("dgaf".Equals(data))
                     {
                         Ticklet tick = tickletQueue.Values.ElementAt(0);
+                        int tickID = tickletQueue.Keys.ElementAt(0);
                         String messageString = tick.getID() + " " + tick.getConnectionString();
-                        tickletQueue.Remove(0); //TODO change this to be a seperate message type; with this setup, we risk dropping ticklets, but it suffices for the time being
+                        tickletQueue.Remove(tickID);
                         sendMessageTo(new Message("T", messageString), clientSocket);
                     }
                     else
