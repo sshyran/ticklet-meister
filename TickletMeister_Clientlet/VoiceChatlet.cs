@@ -133,8 +133,26 @@ namespace TickletMeister_VoiceLib
 
         public void endChat()
         {
-            t.Abort();
-            r.Close();
+            
+            try
+            {
+                t.Abort();
+                t = null;
+            }
+            catch
+            {
+                //try to stop the thread
+            }
+            try
+            {
+                r.Close();
+                r = null;
+            }
+            catch
+            {
+                //try to close the socket
+            }
+            connected = false;
             Stop();
         }
 

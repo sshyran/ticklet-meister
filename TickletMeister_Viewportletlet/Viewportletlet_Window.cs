@@ -686,7 +686,7 @@ namespace TickletMeister_Viewportletlet
                     if (vc != null)
                     {
                         vc.endChat();
-                        vc = null;
+                        //vc = null;
                     }
                 }
 
@@ -800,6 +800,7 @@ namespace TickletMeister_Viewportletlet
                         }
                         if (changeButtons)
                         {
+                            discoButton.Enabled = false;
                             pollButton.Enabled = false;
                             selectButton.Enabled = false;
                         }
@@ -846,6 +847,7 @@ namespace TickletMeister_Viewportletlet
                         }
                         if (changeButtons)
                         {
+                            discoButton.Enabled = false;
                             selectButton.Enabled = false;
                             pollButton.Enabled = false;
                         }

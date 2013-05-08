@@ -198,11 +198,11 @@ namespace TickletMeister_Serverlet
                 return entities.Keys;
             }
         }
-        public Dictionary<int, Socket>.ValueCollection listGurus()
+        public List<Socket> listGurus()
         {
             lock (entities)
             {
-                return gurus.Values;
+                return gurus.Values.ToList();
             }
         }
         public static String SocketToIP(Socket s)
@@ -495,7 +495,7 @@ namespace TickletMeister_Serverlet
 
         private void sendToAllGurus(Message message)
         {
-            Dictionary<int, Socket>.ValueCollection list = entities.listGurus(); //clone the list
+            List<Socket> list = entities.listGurus(); //duplicate the list
                 foreach (Socket guru in list)
                 {
                     try

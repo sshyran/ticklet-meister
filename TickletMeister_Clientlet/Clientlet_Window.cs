@@ -502,7 +502,10 @@ namespace TickletMeister_Clientlet
             this.Invoke(InterfaceMorph);
             try
             {
-                vc.endChat();
+                lock (voiceLock)
+                {
+                    vc.endChat();
+                }
             }
             catch
             {
