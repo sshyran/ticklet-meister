@@ -459,9 +459,7 @@ namespace TickletMeister_Clientlet
          
             rdpSession.OnAttendeeConnected += new _IRDPSessionEvents_OnAttendeeConnectedEventHandler(OnGuruConnect);
             rdpSession.OnAttendeeDisconnected += new _IRDPSessionEvents_OnAttendeeDisconnectedEventHandler(OnGuruDisconnect);
-            //rdpSession.OnControlLevelChangeRequest += new _IRDPSessionEvents_OnControlLevelChangeRequestEventHandler(OnGuruChangeControlLevel);
-            
-            //OnControlLevelChangeRequest may not be needed
+           // rdpSession.OnControlLevelChangeRequest += new _IRDPSessionEvents_OnControlLevelChangeRequestEventHandler(OnGuruChangeControlLevel);
 
             rdpSession.Open();
             
@@ -511,8 +509,6 @@ namespace TickletMeister_Clientlet
         {
             IRDPSRAPIAttendee guru = attendee as IRDPSRAPIAttendee;
             guru.ControlLevel = level;
-
-            rdpSession.Close();
             
         }
 

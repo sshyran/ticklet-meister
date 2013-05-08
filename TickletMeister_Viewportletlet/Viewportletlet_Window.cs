@@ -622,6 +622,7 @@ namespace TickletMeister_Viewportletlet
                 {
                     connectButton.Enabled = false;
                     discoButton.Enabled = true;
+                    toggleButton.Enabled = true;
                 }
                 else
                 {
@@ -699,6 +700,7 @@ namespace TickletMeister_Viewportletlet
                 voiceButton.Enabled = false;
                 selectButton.Enabled = true;
                 pollButton.Enabled = true;
+                toggleButton.Enabled = false;
                 setCooldown();
             }
         }
@@ -740,19 +742,36 @@ namespace TickletMeister_Viewportletlet
             //Application.Exit();
         }
 
-        
-      
+
 
         private void alertButton_Click(object sender, EventArgs e)
         {
             if (cool())
             {
-                String text = textInputBox.Text;
-                Message m = new Message("AlertAll", text);
-                sendMessageToServer(m);
+                if (axRDPViewer1.Focused)
+                {
+                    textInputBox.Focus();
+                }
+                else
+                {
+                    axRDPViewer1.Focus();
+                }
                 setCooldown();
             }
+            
         }
+
+        //private void alertButton_Click(object sender, EventArgs e)
+        //{
+        //    if (cool())
+        //    {
+        //        String text = textInputBox.Text;
+        //        Message m = new Message("AlertAll", text);
+        //        sendMessageToServer(m);
+        //        setCooldown();
+        //    }
+        //    axRDPViewer1.Focus();
+        //}
 
         private void endButton_Click(object sender, EventArgs e)
         {
@@ -870,6 +889,7 @@ namespace TickletMeister_Viewportletlet
                 }
                 setCooldown();
             }
+            axRDPViewer1.Focus();
             
         }
 

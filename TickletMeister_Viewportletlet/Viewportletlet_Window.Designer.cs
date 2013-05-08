@@ -38,7 +38,7 @@
             this.discoButton = new System.Windows.Forms.Button();
             this.textOutputBox = new System.Windows.Forms.TextBox();
             this.textInputBox = new System.Windows.Forms.TextBox();
-            this.alertButton = new System.Windows.Forms.Button();
+            this.toggleButton = new System.Windows.Forms.Button();
             this.pollButton = new System.Windows.Forms.Button();
             this.tickletSelectionBox = new System.Windows.Forms.TextBox();
             this.selectButton = new System.Windows.Forms.Button();
@@ -70,7 +70,6 @@
             this.axRDPViewer1.OcxState = ((System.Windows.Forms.AxHost.State)(resources.GetObject("axRDPViewer1.OcxState")));
             this.axRDPViewer1.Size = new System.Drawing.Size(1041, 635);
             this.axRDPViewer1.TabIndex = 2;
-            //this.axRDPViewer1.Enter += new System.EventHandler(this.axRDPViewer1_Enter);
             // 
             // discoButton
             // 
@@ -107,15 +106,16 @@
             this.textInputBox.TabIndex = 5;
             this.textInputBox.TextChanged += new System.EventHandler(this.textInputBox_TextChanged);
             // 
-            // alertButton
+            // toggleButton
             // 
-            this.alertButton.Location = new System.Drawing.Point(331, 5);
-            this.alertButton.Name = "alertButton";
-            this.alertButton.Size = new System.Drawing.Size(75, 23);
-            this.alertButton.TabIndex = 6;
-            this.alertButton.Text = "Alert!";
-            this.alertButton.UseVisualStyleBackColor = true;
-            this.alertButton.Click += new System.EventHandler(this.alertButton_Click);
+            this.toggleButton.Enabled = false;
+            this.toggleButton.Location = new System.Drawing.Point(331, 5);
+            this.toggleButton.Name = "toggleButton";
+            this.toggleButton.Size = new System.Drawing.Size(105, 23);
+            this.toggleButton.TabIndex = 6;
+            this.toggleButton.Text = "Take Control!";
+            this.toggleButton.UseVisualStyleBackColor = true;
+            this.toggleButton.Click += new System.EventHandler(this.alertButton_Click);
             // 
             // pollButton
             // 
@@ -216,7 +216,7 @@
             this.Controls.Add(this.selectButton);
             this.Controls.Add(this.tickletSelectionBox);
             this.Controls.Add(this.pollButton);
-            this.Controls.Add(this.alertButton);
+            this.Controls.Add(this.toggleButton);
             this.Controls.Add(this.textInputBox);
             this.Controls.Add(this.textOutputBox);
             this.Controls.Add(this.discoButton);
@@ -238,7 +238,7 @@
         private System.Windows.Forms.Button discoButton;
         private System.Windows.Forms.TextBox textOutputBox;
         private System.Windows.Forms.TextBox textInputBox;
-        private System.Windows.Forms.Button alertButton;
+        private System.Windows.Forms.Button toggleButton;
         private System.Windows.Forms.Button pollButton;
         private System.Windows.Forms.TextBox tickletSelectionBox;
         private System.Windows.Forms.Button selectButton;
