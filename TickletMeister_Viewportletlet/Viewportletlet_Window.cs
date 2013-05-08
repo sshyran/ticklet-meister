@@ -547,31 +547,43 @@ namespace TickletMeister_Viewportletlet
 
         private void OnDisconnectFromClient(object sender, _IRDPSessionEvents_OnConnectionTerminatedEvent e)
         {
-            try
+            Action disco = () =>
             {
-                axRDPViewer1.Disconnect();
-            }
-            catch { }
+                try
+                {
+                    axRDPViewer1.Disconnect();
+                }
+                catch { }
+            };
+            this.Invoke(disco);
             ShowTickletList();
         }
 
         private void OnConnectionFail(object sender, EventArgs e)
         {
-            try
+            Action disco = () =>
             {
-                axRDPViewer1.Disconnect();
-            }
-            catch { }
+                try
+                {
+                    axRDPViewer1.Disconnect();
+                }
+                catch { }
+            };
+            this.Invoke(disco);
             ShowTickletList();
         }
 
         private void OnError(object sender, _IRDPSessionEvents_OnErrorEvent e)
         {
-            try
+            Action disco = () =>
             {
-                axRDPViewer1.Disconnect();
-            }
-            catch { }
+                try
+                {
+                    axRDPViewer1.Disconnect();
+                }
+                catch { }
+            };
+            this.Invoke(disco);
             ShowTickletList();
         }
 
@@ -681,6 +693,8 @@ namespace TickletMeister_Viewportletlet
         {
             if (cool())
             {
+                axRDPViewer1.Focus();
+                axRDPViewer1.Disconnect();
                 lock (voiceLock)
                 {
                     if (vc != null)
@@ -688,12 +702,6 @@ namespace TickletMeister_Viewportletlet
                         vc.endChat();
                         //vc = null;
                     }
-                }
-
-                lock (LoxyPants)
-                {
-                    axRDPViewer1.Disconnect();
-                    SelectTicklet(null);
                 }
                 discoButton.Enabled = false;
                 connectButton.Enabled = false;
