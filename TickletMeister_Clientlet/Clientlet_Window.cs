@@ -32,7 +32,7 @@ namespace TickletMeister_Clientlet
         private Thread cooldownThread;
         private object coolLock = new object();
         private bool cooldown; //prevent buttons from being pressed too frequently, thus overwhelming the server
-        
+        private String connectionString = null;
 
        // private String clientID;
 
@@ -408,7 +408,7 @@ namespace TickletMeister_Clientlet
             {
                 
                 StartRDPSession();
-                String invite = GetInviteString();
+                String invite = connectionString == null ? GetInviteString() : connectionString;
                 Console.WriteLine("Ticklet Creation Succeeded!");
                 return invite;
             }
@@ -447,7 +447,8 @@ namespace TickletMeister_Clientlet
         private string GetInviteString()
         {
             IRDPSRAPIInvitation pInvitation = rdpSession.Invitations.CreateInvitation("TickletMeister", "RandyButternubs", "", 1);
-            return pInvitation.ConnectionString;
+            connectionString = pInvitation.ConnectionString;
+            return connectionString;
         }
 
         /**
@@ -455,15 +456,21 @@ namespace TickletMeister_Clientlet
          * */
         private void StartRDPSession()
         {
-            rdpSession = new RDPSession();
-         
-            rdpSession.OnAttendeeConnected += new _IRDPSessionEvents_OnAttendeeConnectedEventHandler(OnGuruConnect);
-            rdpSession.OnAttendeeDisconnected += new _IRDPSessionEvents_OnAttendeeDisconnectedEventHandler(OnGuruDisconnect);
-           // rdpSession.OnControlLevelChangeRequest += new _IRDPSessionEvents_OnControlLevelChangeRequestEventHandler(OnGuruChangeControlLevel);
+            if (rdpSession == null)
+            {
+                rdpSession = new RDPSession();
 
-            rdpSession.Open();
-            
-            
+                rdpSession.OnAttendeeConnected += new _IRDPSessionEvents_OnAttendeeConnectedEventHandler(OnGuruConnect);
+                rdpSession.OnAttendeeDisconnected += new _IRDPSessionEvents_OnAttendeeDisconnectedEventHandler(OnGuruDisconnect);
+                // rdpSession.OnControlLevelChangeRequest += new _IRDPSessionEvents_OnControlLevelChangeRequestEventHandler(OnGuruChangeControlLevel);
+                rdpSession.Open();
+            }
+            else
+            {
+                rdpSession.Resume();
+            }
+        
+ 
         }
 
         /** 
@@ -489,6 +496,8 @@ namespace TickletMeister_Clientlet
                 //submitButton.Enabled = true;
                 //textBox1.Text = "disconnected from server";
                 textBox1.Text = "Thank you for shopping with Ticklet Meister!";
+                submitButton.Enabled = true;
+                
             };
             this.Invoke(InterfaceMorph);
             try
@@ -499,7 +508,8 @@ namespace TickletMeister_Clientlet
             {
                 //ending voice chat
             }
-            
+            rdpSession.Pause();
+          
         }
 
         /** 

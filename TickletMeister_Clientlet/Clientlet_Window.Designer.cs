@@ -56,6 +56,7 @@
             this.echoButton.TabIndex = 3;
             this.echoButton.Text = "Echo";
             this.echoButton.UseVisualStyleBackColor = true;
+            this.echoButton.Visible = false;
             this.echoButton.Click += new System.EventHandler(this.echoButton_Click);
             // 
             // textInputBox
@@ -65,6 +66,7 @@
             this.textInputBox.Size = new System.Drawing.Size(221, 20);
             this.textInputBox.TabIndex = 4;
             this.textInputBox.Text = "Input";
+            this.textInputBox.Visible = false;
             // 
             // textOutputBox
             // 
@@ -73,6 +75,7 @@
             this.textOutputBox.Size = new System.Drawing.Size(221, 20);
             this.textOutputBox.TabIndex = 5;
             this.textOutputBox.Text = "Output";
+            this.textOutputBox.Visible = false;
             // 
             // submitButton
             // 
@@ -92,6 +95,7 @@
             this.endButton.TabIndex = 1;
             this.endButton.Text = "End Session";
             this.endButton.UseVisualStyleBackColor = true;
+            this.endButton.Visible = false;
             this.endButton.Click += new System.EventHandler(this.endButton_Click);
             // 
             // chatOutputBox
