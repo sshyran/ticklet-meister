@@ -15,11 +15,13 @@ namespace TickletMeister_Serverlet
     interface IDGenerator
     {
         int generateID();
+        int generateID(int lim);
     }
 
     class SimpleIDGen : IDGenerator
     {
         private int next;
+        
         public SimpleIDGen(int init)
         {
             next = init;
@@ -27,6 +29,15 @@ namespace TickletMeister_Serverlet
         public int generateID()
         {
             return next++;
+        }
+        public int generateID(int limit)
+        {
+            next++;
+            if (next >= limit)
+            {
+                next = 0;
+            }
+            return next;
         }
     }
 
@@ -66,6 +77,20 @@ namespace TickletMeister_Serverlet
             lock (entities)
             {
                 return entities.Values.Contains(sock);
+            }
+        }
+        public bool containsID(int id)
+        {
+            lock (entities)
+            {
+                return entities.Keys.Contains(id);
+            }
+        }
+        public int limit()
+        {
+            lock (entities)
+            {
+                return CLIENT_LIMIT;
             }
         }
         public bool authenticateGuru(Socket sock)
@@ -365,7 +390,11 @@ namespace TickletMeister_Serverlet
 
             lock (gen)
             {
-                int id = gen.generateID();
+                int id = gen.generateID(entities.limit());
+                while (entities.containsID(id))
+                {
+                    id = gen.generateID(entities.limit());
+                }
                 Console.WriteLine("client connected! ... Assigned ID# " + id);
 
                 bool suc = entities.addEntityEntry(id, clientSocket, listener);
