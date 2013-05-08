@@ -92,7 +92,11 @@ namespace TickletMeister_Viewportletlet
          * */
         private void refreshTickList(String[] elms)
         {
-            Action update = () => { tickList.DataSource = elms; };
+            Action update = () => {
+                int index = tickList.SelectedIndex;
+                tickList.DataSource = elms;
+                tickList.SelectedIndex = Math.Min(elms.Length - 1, index);
+            };
             this.Invoke(update);
         }
 
